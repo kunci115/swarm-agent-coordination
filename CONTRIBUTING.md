@@ -12,7 +12,7 @@ This repository runs on the rules it ships. If you have read `AGENTS.md.template
 ## Before you push
 
 ```bash
-sh verify-kit.sh      # 33 checks; must pass
+sh verify-kit.sh      # 38 checks; must pass
 ```
 
 Every script is POSIX `sh` with no dependencies beyond git, grep, and sed — CI runs `sh -n` over all of them on Linux and macOS. If you reach for `bash`, `yq`, or Python, the kit stops being installable in one copy, so please don't.

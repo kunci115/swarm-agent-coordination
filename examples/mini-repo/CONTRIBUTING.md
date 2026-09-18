@@ -30,7 +30,10 @@ A lane never merges its own pull request. The gate is the merge of the combined 
 - One Docker Compose project name per lane per job (never share).
 - Gate in your own worktree; expect CI queueing when runners are busy.
 
-## AI trailers
+## Migrations
 
-Strip `Co-Authored-By: <AI>` trailers before pushing:
-`scripts/strip_ai_trailers.sh dev..HEAD`
+If you add one, run `scripts/check_migration_chain.sh --changed origin/dev` right before you push. The head moves while you work.
+
+## AI trailers (opt-in policy, off by default)
+
+This example repo keeps them. If yours strips them, set `STRIP_AI_TRAILERS: 'true'` in `lane-gate.yml` and install the hook — `ln -sf ../../scripts/commit-msg-example .git/hooks/commit-msg` — so nothing ever has to be rewritten.

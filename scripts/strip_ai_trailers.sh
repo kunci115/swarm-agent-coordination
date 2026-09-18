@@ -5,11 +5,21 @@
 #   scripts/strip_ai_trailers.sh --check <RANGE>
 #   scripts/strip_ai_trailers.sh --last <N>    # rewrite last N commits
 #
-# Why: the repo owner decides whether AI attribution appears in history.
-# The harness (Claude Code, Cursor, etc.) keeps adding "Co-Authored-By: Claude
-# ..." trailers on its own; stripping them is part of finishing a commit.
-# Do it BEFORE pushing — stripping after a PR has gone green rewrites every
-# SHA on it and re-runs the whole gate.
+# This is the REPAIR path, for trailers that are already committed. The fix is
+# scripts/commit-msg-example, a hook that strips them as the message is written:
+#
+#   ln -sf ../../scripts/commit-msg-example .git/hooks/commit-msg
+#
+# Install that once and this script becomes something you never need again.
+#
+# Why prefer the hook: this script rewrites every SHA in the range. Run it on a
+# pull request that has already gone green and you re-run the entire gate,
+# invalidate every review, and need a force-push to land work that was already
+# landable. Do it BEFORE pushing, or better, do not need it.
+#
+# Whether AI attribution appears in history at all is the repo owner's call and
+# opt-in — see the "Repo policy: AI attribution" section of AGENTS.md. It is a
+# preference about how history reads, not a coordination rule.
 #
 # Default behavior rewrites commits (filter-branch). --check only reports.
 

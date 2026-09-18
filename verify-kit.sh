@@ -89,6 +89,56 @@ else
 fi
 check "clean range reports OK"        0 sh "$KIT_ROOT/scripts/strip_ai_trailers.sh" --check HEAD~1..HEAD
 
+echo ""
+echo "== commit-msg-example (prevention, opt-in) =="
+cat > "$TMP/msg-in.txt" <<'MSG'
+feat: add the thing
+
+Explains why the thing is added.
+
+Co-Authored-By: Claude <claude@anthropic.com>
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+MSG
+sh "$KIT_ROOT/scripts/commit-msg-example" "$TMP/msg-in.txt" >/dev/null 2>&1 || true
+if grep -qiE "Co-Authored-By|Generated with" "$TMP/msg-in.txt"; then
+    FAIL=$((FAIL+1)); echo "FAIL: hook strips trailers from a message"
+else
+    PASS=$((PASS+1)); echo "PASS: hook strips trailers from a message"
+fi
+if grep -q "Explains why the thing is added." "$TMP/msg-in.txt" &&
+   head -1 "$TMP/msg-in.txt" | grep -q "feat: add the thing"; then
+    PASS=$((PASS+1)); echo "PASS: hook keeps the real message intact"
+else
+    FAIL=$((FAIL+1)); echo "FAIL: hook keeps the real message intact"
+fi
+if [ -n "$(tail -1 "$TMP/msg-in.txt")" ]; then
+    PASS=$((PASS+1)); echo "PASS: hook leaves no trailing blank run"
+else
+    FAIL=$((FAIL+1)); echo "FAIL: hook leaves no trailing blank run"
+fi
+
+# a message with nothing to strip must come out byte-identical
+printf 'fix: ordinary commit\n\nNo trailers here.\n' > "$TMP/msg-clean.txt"
+cp "$TMP/msg-clean.txt" "$TMP/msg-clean.orig"
+sh "$KIT_ROOT/scripts/commit-msg-example" "$TMP/msg-clean.txt" >/dev/null 2>&1 || true
+check "clean message passes through unchanged" 0 cmp -s "$TMP/msg-clean.txt" "$TMP/msg-clean.orig"
+
+# and the hook must actually work when git invokes it
+git_init_quiet "$TMP/hookrepo"
+mkdir -p .git/hooks
+cp "$KIT_ROOT/scripts/commit-msg-example" .git/hooks/commit-msg
+chmod +x .git/hooks/commit-msg
+echo z > z.txt && git add z.txt
+git commit -qm "chore: real commit through the hook
+
+Co-Authored-By: Claude <claude@anthropic.com>"
+if git log -1 --format=%B | grep -qi "Co-Authored-By"; then
+    FAIL=$((FAIL+1)); echo "FAIL: installed hook strips on a real commit"
+else
+    PASS=$((PASS+1)); echo "PASS: installed hook strips on a real commit"
+fi
+cd "$TMP/repo"
+
 # ---------------------------------------------------------------------------
 echo ""
 echo "== check_migration_chain.sh =="

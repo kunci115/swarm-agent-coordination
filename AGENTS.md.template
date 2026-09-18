@@ -11,7 +11,11 @@
 - A human orchestrator (or an orchestrating agent) assigns work to you. Do not invent scope beyond your assignment.
 - Your lane ends when your pull request is open. Someone else merges it.
 
-## The Five Rules
+## The Four Rules
+
+Four, not more. Every rule below cost a real incident to learn, and every rule
+you add costs every agent attention forever — so the list stays short enough to
+hold in working memory while doing something else.
 
 ### 1. Branch from the integration branch, and say so in your name
 
@@ -47,10 +51,30 @@
 - If you need shared resources (database connections, ports, runners), check the register below and stay inside its ceilings.
 - Cheapest way to run all of this at the right moment: install the hook, `ln -sf ../../scripts/pre-push-example .git/hooks/pre-push`.
 
-### 5. Leave the repo cleaner than the AI trail you'd otherwise leave
+## Repo policy: AI attribution (opt-in, off by default)
 
-- Strip `Co-Authored-By: <AI model>` and similar AI trailers from your commits before pushing: `scripts/strip_ai_trailers.sh origin/dev..HEAD`.
-- The repo owner decides whether AI trailers appear in history. Respect that decision mechanically, not by asking again.
+This is a **policy**, not a coordination rule, and it is kept separate from the
+four rules above on purpose. Every rule above traces to a specific incident
+where one lane's work destroyed another's. This one traces to nothing: no
+coordination failure in the case study involved a `Co-Authored-By` trailer. It
+is a preference about how history should read, and preferences belong where
+they can be switched off.
+
+Some repo owners want AI attribution stripped; some want it kept, and in a
+repository built by agents, keeping it is the more honest default. **The owner
+decides, and the default here is to keep it.**
+
+To turn stripping on:
+
+1. Set `STRIP_AI_TRAILERS: 'true'` in `.github/workflows/lane-gate.yml`.
+2. Install the hook so it never has to be undone:
+   `ln -sf ../../scripts/commit-msg-example .git/hooks/commit-msg`
+
+Prevention over repair, for a concrete reason: the hook edits the message as it
+is written, and nothing is ever rewritten. `scripts/strip_ai_trailers.sh` is the
+fallback for commits that already exist, and it rewrites every SHA in the range
+— on a pull request that has already gone green, that re-runs the entire gate
+and invalidates every review. Install the hook once and you never pay that.
 
 ## Shared resources register
 

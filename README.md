@@ -50,9 +50,10 @@ scripts/
   check_compose_name.sh     Every CI job gets its own Docker Compose identity
   check_paths_owned.sh      PRs must declare which file paths they own
   check_branch_base.sh      Branch names must declare their base (feature/ fix/ hotfix/)
-  strip_ai_trailers.sh      Strip "Co-Authored-By: <AI model>" traces before push
+  strip_ai_trailers.sh      Strip "Co-Authored-By: <AI model>" traces (opt-in policy)
   pre-push-example          Client-side hook: ask the gate's questions before the push
-verify-kit.sh               Run every script against throwaway repos — 33 checks
+  commit-msg-example        Client-side hook: strip AI trailers at write time (opt-in)
+verify-kit.sh               Run every script against throwaway repos — 38 checks
 examples/mini-repo/         A minimal repository with the kit already installed
 docs/RESEARCH.md            The case study: methodology, 85-incident classification, quality indicators
 ```
@@ -60,7 +61,7 @@ docs/RESEARCH.md            The case study: methodology, 85-incident classificat
 Verify your copy works before you trust it:
 
 ```bash
-sh verify-kit.sh        # 33 checks, exits non-zero on any failure
+sh verify-kit.sh        # 38 checks, exits non-zero on any failure
 ```
 
 The checks that matter most are the ones you run *before* a merge, not after:
@@ -91,9 +92,16 @@ cp -r path/to/swarm-agent-coordination/scripts scripts/
 cp AGENTS.md.template AGENTS.md          # edit: change integration branch name if needed
 mkdir -p .github/workflows
 cp .github/workflows/lane-gate.yml .github/workflows/
+cp .github/workflows/merge-gate.yml .github/workflows/   # edit: set TEST_COMMAND
 ```
 
-Done. From this commit on, every pull request is mechanically checked for path ownership and branch-name honesty.
+Done. From this commit on, every pull request is mechanically checked for path ownership, branch-name honesty, migration parentage, and Compose identity.
+
+One more step worth the thirty seconds, because the cheapest place to catch any of this is before the push leaves your machine:
+
+```bash
+ln -sf ../../scripts/pre-push-example .git/hooks/pre-push
+```
 
 ## Installation for AGENTS (level 2)
 
