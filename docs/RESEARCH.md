@@ -53,6 +53,36 @@ Beyond the six: **migration chain forks** were the mechanism behind the largest 
 - **Feature cycle time**: median 4.3 h (n=140)
 - **Rework cost**: estimated 5–20% of effort (lower bound)
 
+## What the corpus corrected
+
+The counts above were produced by reading pull request prose for keywords. That
+method measures how often a failure was *written about*. Re-deriving the same
+taxonomy from structured data (`analysis/`, reproducible with `make check`)
+changed three of them, and two are corrections rather than additions.
+
+**Runner contention was reported as 2 incidents. It was a permanent condition.**
+The median pull request waited **eleven minutes** for a runner and 155 of 226
+waited over five. Three attempts at a per-PR rule reached precision 0.01, 0.02,
+0.02 — the threshold was never the problem. Queueing held for thirty-five days,
+so no per-PR rule can separate signal from background. The number 2 counts how
+often someone narrated it, not how often it happened. Contention belongs at
+corpus level; a shared-resource shortage is not a property of the work queued
+behind it.
+
+**No migration chain fork was visible to the pull request gate.** The chain
+forked 11 times. **Zero** of the eleven were pull request merge commits — they
+occurred in integration-round merges, `dev`→lane back-merges, and one ordinary
+feature commit, then were repaired before review. Every pull request opened onto
+a single head. This is the strongest evidence in the corpus for the client-side
+hook over CI alone: the gate was right every time and would have caught none of
+them.
+
+**Declaring ownership is not declaring it correctly.** Of 221 pull requests
+carrying a `## Paths owned` block, **68 did not cover their own diff** — 546
+files touched but undeclared, a 31% gap between ritual and substance. The rule
+in this kit now checks the declaration against the diff, calibrated against
+exactly this measurement.
+
 ## Limitations
 
 Single case (n=1), revelatory design — no statistical generalization claims. Keyword classification validated on samples, not a manual census. Pre/post integration-model comparison is confounded (per-lane PRs did not exist on the platform before the switch). Defect-finder attribution reconstructed from PR narratives (selection bias). The researcher was the orchestrator (reflexivity); all quantitative claims rest on machine data.

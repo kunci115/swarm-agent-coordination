@@ -40,8 +40,10 @@ hold in working memory while doing something else.
   - app/db/migrations/versions/0042_new_migration.py (new)
   ```
 
+- **CI checks the declaration against the diff, not merely that you wrote one.** A pull request that touches a file it did not declare is refused, and the failure names the files.
+- A glob, a brace list, or a directory is a legitimate declaration — `tests/*`, `app/{api,ui}/*.py`, `docs/booking/`. Declaring broadly is not cheating; the point is that the declaration should predict the diff, so another lane reading it learns what to stay away from. Silence is what fails.
 - If you touch files outside your declared paths, extend the declaration **before** you push, and check the open PRs for conflicts with those paths.
-- Two lanes editing the same file without a declaration is how collisions are found at merge time. The declaration is how they're found earlier.
+- Two lanes editing the same file without a declaration is how collisions are found at merge time. The declaration is how they're found earlier. In the case study 68 of 221 declarations did not cover their own diff — the section was written, and it was wrong.
 
 ### 4. Gate your own work before you push
 
@@ -49,7 +51,7 @@ hold in working memory while doing something else.
 - If you added a database migration, run `scripts/check_migration_chain.sh --changed origin/dev` **immediately before you push**, not when you wrote it. The head moves while you work: a migration that was correctly parented an hour ago is a forked chain now.
 - If your project uses Docker: give your stack a unique `COMPOSE_PROJECT_NAME` (your lane ID + job + any matrix value). Two lanes sharing a Compose project name share — and destroy — each other's database. `scripts/check_compose_name.sh` checks the CI side of this.
 - If you need shared resources (database connections, ports, runners), check the register below and stay inside its ceilings.
-- Cheapest way to run all of this at the right moment: install the hook, `ln -sf ../../scripts/pre-push-example .git/hooks/pre-push`.
+- **Install the hook: `ln -sf ../../scripts/pre-push-example .git/hooks/pre-push`.** This is not a convenience. The migration chain in the case study forked eleven times and not one fork was a pull request merge commit — every fork happened between pushes and was repaired before review, so a gate that only runs on pull requests saw a healthy chain each time and would have caught none of them. The hook runs at the moment the fork exists.
 
 ## Repo policy: AI attribution (opt-in, off by default)
 

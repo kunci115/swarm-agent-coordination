@@ -76,7 +76,39 @@ printf '## Paths owned\n- f.txt\n' > "$TMP/body-ok.md"
 printf 'Fixes the thing.\n' > "$TMP/body-missing.md"
 check "body with declaration accepted"   0 sh "$KIT_ROOT/scripts/check_paths_owned.sh" --file "$TMP/body-ok.md" HEAD~1
 check "body without declaration refused" 1 sh "$KIT_ROOT/scripts/check_paths_owned.sh" --file "$TMP/body-missing.md" HEAD~1
-check "local mode lists touched paths"   1 sh "$KIT_ROOT/scripts/check_paths_owned.sh" --local HEAD~1
+check "local mode without a body refused" 1 sh "$KIT_ROOT/scripts/check_paths_owned.sh" --local HEAD~1
+
+# The declaration has to cover the diff, not merely exist. Every matching form
+# below appears in the corpus this rule was calibrated against.
+git_init_quiet "$TMP/owned"
+mkdir -p app/a app/b tests/agents docs/ui
+for f in app/a/one.py app/b/two.py tests/agents/test_one.py tests/conftest.py docs/ui/notes.md; do
+    echo x > "$f"
+done
+git add -A && git commit -qm base
+for f in app/a/one.py tests/agents/test_one.py tests/conftest.py docs/ui/notes.md; do echo y >> "$f"; done
+git add -A && git commit -qm change
+
+owned() { printf '## Paths owned\n' > "$TMP/b.md"; for p in "$@"; do printf -- '- %s\n' "$p" >> "$TMP/b.md"; done; }
+CPO="$KIT_ROOT/scripts/check_paths_owned.sh"
+
+owned app/a/one.py tests/agents/test_one.py tests/conftest.py docs/ui/notes.md
+check_in "$TMP/owned" "declaration covering the diff"    0 sh "$CPO" --file "$TMP/b.md" HEAD~1
+owned app/a/one.py
+check_in "$TMP/owned" "declaration missing files refused" 1 sh "$CPO" --file "$TMP/b.md" HEAD~1
+owned app/a/one.py 'tests/*' docs/ui/notes.md
+check_in "$TMP/owned" "glob covers the rest"             0 sh "$CPO" --file "$TMP/b.md" HEAD~1
+owned app/a/one.py 'tests/*' 'docs/ui/'
+check_in "$TMP/owned" "directory prefix covers"          0 sh "$CPO" --file "$TMP/b.md" HEAD~1
+owned 'app/{a,b}/*.py' 'tests/*' 'docs/ui/'
+check_in "$TMP/owned" "brace expansion covers"           0 sh "$CPO" --file "$TMP/b.md" HEAD~1
+printf '## Paths owned\n\n| Path | What |\n| --- | --- |\n| `app/a/one.py` | x |\n| `tests/*` | y |\n| `docs/ui/notes.md` | z |\n' > "$TMP/b.md"
+check_in "$TMP/owned" "markdown table declaration"       0 sh "$CPO" --file "$TMP/b.md" HEAD~1
+printf '## Paths owned\n\n**Six** files, described below.\n' > "$TMP/b.md"
+check_in "$TMP/owned" "bold text is not a wildcard"      1 sh "$CPO" --file "$TMP/b.md" HEAD~1
+printf '## Paths owned\n' > "$TMP/b.md"
+check_in "$TMP/owned" "empty section refused"            1 sh "$CPO" --file "$TMP/b.md" HEAD~1
+cd "$TMP/repo"
 
 echo ""
 echo "== strip_ai_trailers.sh =="
