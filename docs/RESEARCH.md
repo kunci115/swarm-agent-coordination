@@ -33,12 +33,16 @@ A real information system (workshop management for a motorcycle service business
 
 ## The six worst-case findings that shaped the rules
 
-1. **Ten lanes merged together produced six seam defects, none visible from inside any lane, and git reported no conflicts.** → merge-gate rule (the combined result is the gate, not green lanes).
-2. **Connection pool: 16 demand vs ceiling 15** — each lane within its own visible ceiling; the sum was not. → shared resources register rule.
-3. **Eight lanes stalled on an exhausted CI runner quota.** → "expect queueing, don't kill queued jobs" + runner register.
-4. **Two gate jobs shared one Docker Compose project name**; the second attached to the first's database, and the first's `down -v` destroyed it. Latent until parallelism increased. → one Compose project name per lane per job.
-5. **The only textual merge conflict was preempted**: nine issues known to touch `phrasing.py` were assigned to one lane at planning time. → coordination through artifacts works preventively, not just reactively.
-6. **One defect escaped to production** because its test stub mirrored the code's wrong assumption — a structural limit of instrumentation. → honest reporting of what process rules cannot catch.
+Each finding names the rule it produced and the tool in this kit that now enforces it. A finding with no tool is an honest gap, not an omission — finding 6 is one.
+
+1. **Ten lanes merged together produced six seam defects, none visible from inside any lane, and git reported no conflicts.** Four of the six would have reached `dev` had the lanes merged themselves. → merge-gate rule: the combined result is the gate, not green lanes. → `scripts/merge_batch.sh`, `.github/workflows/merge-gate.yml`
+2. **Connection pool: 16 demand vs ceiling 15** — each lane within its own visible ceiling; the sum was not. → shared resources register rule. → the register table in `AGENTS.md.template`
+3. **Eight lanes stalled on an exhausted CI runner quota**; nine of those PRs had been green since the previous day. → "expect queueing, don't kill queued jobs" + runner register. → the same register
+4. **Two gate jobs shared one Docker Compose project name**; the second attached to the first's database, and the first's `down -v` destroyed it. Latent until parallelism increased, because a workflow-level `env` block cannot see matrix values. → one Compose project name per lane per job. → `scripts/check_compose_name.sh`
+5. **The only textual merge conflict was preempted**: nine issues known to touch `phrasing.py` were assigned to one lane at planning time. → coordination through artifacts works preventively, not just reactively. → no tool; this one is a planning decision, and naming it as such is the point
+6. **One defect escaped to production** because its test stub mirrored the code's wrong assumption — the stub and the code were identically wrong, so they agreed. No amount of additional testing from the same assumption could catch it; only an external source of truth could. → a structural limit of instrumentation. → **no tool, and there cannot be one.** Reported here because a kit that claims to catch everything is lying about the one case that matters.
+
+Beyond the six: **migration chain forks** were the mechanism behind the largest incident category (40 of 85 flagged PRs touched shared DB resources). Two lanes write a migration against the same parent, each lane is internally consistent, git reports no conflict because the files differ, and the fork surfaces only on upgrade. → `scripts/check_migration_chain.sh`
 
 ## Quality indicators (measured, full corpus)
 

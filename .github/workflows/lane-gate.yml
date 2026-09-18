@@ -69,6 +69,22 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
+      - name: Migration chain must stay linear
+        run: |
+          [ -f scripts/check_migration_chain.sh ] || {
+            echo "::error::scripts/ is not installed — copy the kit's scripts/ directory into this repo."
+            exit 1
+          }
+          sh scripts/check_migration_chain.sh --changed "${{ github.event.pull_request.base.sha }}"
+
+      - name: Every compose job must own its identity
+        run: |
+          [ -f scripts/check_compose_name.sh ] || {
+            echo "::error::scripts/ is not installed — copy the kit's scripts/ directory into this repo."
+            exit 1
+          }
+          sh scripts/check_compose_name.sh
+
       - name: AI trailers must be stripped
         run: |
           BASE="${{ github.event.pull_request.base.sha }}"

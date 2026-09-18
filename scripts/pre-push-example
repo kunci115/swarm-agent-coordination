@@ -26,6 +26,16 @@ while read local_ref local_sha remote_ref remote_sha; do
         "$DIR/check_branch_base.sh" "$BRANCH" "$local_sha" || exit 1
     fi
 
+    # refuse a migration cut from a stale parent — a fork that has not happened yet
+    if [ -x "$DIR/check_migration_chain.sh" ]; then
+        "$DIR/check_migration_chain.sh" --changed "origin/$INTEGRATION_BRANCH" || exit 1
+    fi
+
+    # refuse CI jobs that would share one Docker Compose identity
+    if [ -x "$DIR/check_compose_name.sh" ]; then
+        "$DIR/check_compose_name.sh" || exit 1
+    fi
+
     # strip AI trailers before they reach the remote
     if [ -x "$DIR/strip_ai_trailers.sh" ]; then
         "$DIR/strip_ai_trailers.sh" --check "$remote_sha..$local_sha" || {

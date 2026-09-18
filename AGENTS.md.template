@@ -24,6 +24,7 @@
 
 - Open the pull request, then **stop**. Another lane, the orchestrator, or a human merges it.
 - The quality gate is the **merge of the combined result**, not your green checkmark. Ten independently-green PRs are exactly how seam defects get in.
+- Whoever does merge runs `scripts/merge_batch.sh --base dev --test "<your suite>" <PR numbers>` first, or dispatches `merge-gate.yml`. Your green checkmark proves your lane works beside the base; it says nothing about your lane working beside the nine other lanes landing today. Only the combined tree answers that, and you are not the one who can build it.
 
 ### 3. Declare the paths you own
 
@@ -41,8 +42,10 @@
 ### 4. Gate your own work before you push
 
 - Run the test suite in your own worktree before pushing.
-- If your project uses Docker: give your stack a unique `COMPOSE_PROJECT_NAME` (your lane ID + job). Two lanes sharing a Compose project name share — and destroy — each other's database.
-- If you need shared resources (database connections, ports, runners), check the resource register in this file or in CONTRIBUTING.md, and stay inside its ceilings.
+- If you added a database migration, run `scripts/check_migration_chain.sh --changed origin/dev` **immediately before you push**, not when you wrote it. The head moves while you work: a migration that was correctly parented an hour ago is a forked chain now.
+- If your project uses Docker: give your stack a unique `COMPOSE_PROJECT_NAME` (your lane ID + job + any matrix value). Two lanes sharing a Compose project name share — and destroy — each other's database. `scripts/check_compose_name.sh` checks the CI side of this.
+- If you need shared resources (database connections, ports, runners), check the register below and stay inside its ceilings.
+- Cheapest way to run all of this at the right moment: install the hook, `ln -sf ../../scripts/pre-push-example .git/hooks/pre-push`.
 
 ### 5. Leave the repo cleaner than the AI trail you'd otherwise leave
 
@@ -64,8 +67,8 @@ before you rely on it.
 |---|---|---|---|
 | Database connection pool | 15 connections | platform lane | Count `turns × connections_per_turn`, plus any background sweep you add — a sweep opens its own session. Sum across *open PRs*, not just your own: the case failed at demand 16 vs ceiling 15, with every lane individually inside a ceiling it could see. |
 | CI runners | 3 self-hosted | orchestrator | Gate in your own worktree first. Expect queueing and **do not kill queued jobs**. The case stalled 8 lanes on an exhausted hosted-runner quota; 9 of those PRs had been green since the previous day. |
-| Docker Compose project name | one per lane **per job** | each lane | Derive it from the run ID + your job name + **the matrix value**, e.g. `dmsx-${RUN_ID}-${JOB}-${MATRIX}`. A workflow-level `env` cannot see matrix values, so two matrix legs that look distinct collide. In the case, the second job attached to the first job's database and the first job's `down -v` destroyed it — latent until parallelism rose. |
-| Migration chain | exactly one linear head | schema lane | Cut your migration from the *current* integration head, never from where your branch started. Re-check for a second head right before you push. Two lanes writing a migration against the same parent is the single largest incident category in the case (40 of 85 PRs touched shared DB resources). |
+| Docker Compose project name | one per lane **per job** | each lane | Derive it from the run ID + your job name + **the matrix value**, e.g. `dmsx-${RUN_ID}-${JOB}-${MATRIX}`. A workflow-level `env` cannot see matrix values, so two matrix legs that look distinct collide. In the case, the second job attached to the first job's database and the first job's `down -v` destroyed it — latent until parallelism rose. Enforced by `scripts/check_compose_name.sh`. |
+| Migration chain | exactly one linear head | schema lane | Cut your migration from the *current* integration head, never from where your branch started. Re-check for a second head right before you push. Two lanes writing a migration against the same parent is the single largest incident category in the case (40 of 85 PRs touched shared DB resources). Enforced by `scripts/check_migration_chain.sh`. |
 | Service ports | one block per lane | each lane | Bind from your lane's assigned block, never a hardcoded default. Two lanes on one port fail as a flaky test, not as a port error. |
 
 Rules for keeping this table honest:
