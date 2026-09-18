@@ -32,8 +32,11 @@ permissions:
   pull-requests: read
 
 env:
-  # EDIT THIS: the command that proves the combined tree works.
-  TEST_COMMAND: 'echo "set TEST_COMMAND in merge-gate.yml" && exit 1'
+  # EDIT THIS: the command that proves your combined tree works.
+  # Left as a working value rather than a placeholder that fails, because a
+  # real example teaches the setting better than a deliberate error does.
+  # In this repository it runs the kit's own self-test — the kit gating itself.
+  TEST_COMMAND: 'sh verify-kit.sh'
 
 jobs:
   merge-gate:
