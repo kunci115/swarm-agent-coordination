@@ -48,7 +48,7 @@ Every incident in the table above is one of those four dependencies going unmana
 | Migration chain forked into two heads | `check_migration_chain.sh` — one head, and no migration cut from a stale parent |
 | Two CI jobs sharing one Compose project name; one job's `down -v` destroying the other's database | `check_compose_name.sh` — a per-run, per-matrix identity or the gate fails |
 | Pool demand 16 against a ceiling of 15; runner quota exhausted | the shared resources register in `AGENTS.md` — ceilings written down and owned |
-| Undeclared file ownership, collisions found at merge time | `check_paths_owned.sh` — the declaration must cover the diff, not merely exist |
+| Undeclared file ownership, collisions found at merge time | `check_paths_owned.sh` — the declaration must cover the diff, not merely exist (63 of 221 did not) |
 | Branch names that said nothing about their base | `check_branch_base.sh` — a name is a claim, and CI tests the claim |
 
 One finding has no tool and cannot have one. A defect reached production because its test stub was built from the same wrong assumption as the code it tested — the two agreed with each other about something false. No quantity of additional tests written from that assumption could have caught it; only an external source of truth could. That limit is reported in `docs/RESEARCH.md` rather than papered over, because a kit claiming to catch everything is lying about the case that matters most.

@@ -78,8 +78,8 @@ hook over CI alone: the gate was right every time and would have caught none of
 them.
 
 **Declaring ownership is not declaring it correctly.** Of 221 pull requests
-carrying a `## Paths owned` block, **68 did not cover their own diff** — 546
-files touched but undeclared, a 31% gap between ritual and substance. The rule
+carrying a `## Paths owned` block, **63 did not cover their own diff** — 540
+files touched but undeclared, a 28% gap between ritual and substance. The rule
 in this kit now checks the declaration against the diff, calibrated against
 exactly this measurement.
 

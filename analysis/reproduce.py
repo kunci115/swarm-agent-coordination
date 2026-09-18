@@ -47,10 +47,13 @@ CLOSES = re.compile(r"^\s*(?:close[sd]?|fixe?[sd]?|resolve[sd]?)\s+#(\d+)", re.I
 HEADING = re.compile(r"^#{1,6}\s")
 BACKTICKED = re.compile(r"`([^`]*)`")
 BULLET = re.compile(r"^\s*[-*]\s+(\S+)")
-# A path has a separator or an extension, and never opens with a markdown
-# marker. Without this, a stray `**` from bold text parses as a pattern that
-# matches every file and silently passes the whole check.
-PATHLIKE = re.compile(r"^[^*#|\s][^\s]*[/.][^\s]*$")
+# Backticks are an explicit "this is a path" marker, so a backticked token may
+# be a bare filename: `Makefile`, `.gitignore`. A bullet is not such a marker,
+# so a bullet item has to look like a path — otherwise a sentence fragment
+# becomes a pattern, and a stray `**` from bold text becomes one that matches
+# every file and silently passes the whole check.
+TICK_TOKEN = re.compile(r"^[A-Za-z0-9_.{-][A-Za-z0-9_./*{},-]*$")
+BULLET_TOKEN = re.compile(r"^[^*#|\s][^\s]*$")
 
 
 def load(path):
@@ -82,13 +85,14 @@ def declared_paths(raw):
             if "paths owned" in line.lower():
                 started = True
             continue
-        tokens = BACKTICKED.findall(line)
+        for tok in BACKTICKED.findall(line):
+            tok = tok.rstrip(",;:").removeprefix("./")
+            if TICK_TOKEN.match(tok):
+                out.add(tok)
         m = BULLET.match(line)
         if m:
-            tokens.append(m.group(1))
-        for tok in tokens:
-            tok = tok.rstrip(",;:").removeprefix("./")
-            if PATHLIKE.match(tok):
+            tok = m.group(1).rstrip(",;:").removeprefix("./")
+            if BULLET_TOKEN.match(tok) and ("/" in tok or "." in tok):
                 out.add(tok)
     return out
 

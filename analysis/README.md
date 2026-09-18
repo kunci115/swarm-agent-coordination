@@ -99,12 +99,12 @@ pushes, not at review time.
 
 ### Declaring ownership is not the same as declaring it correctly
 
-221 pull requests carried a `## Paths owned` block. In **68 of them the
-declaration did not cover the diff**, leaving 546 files touched but undeclared.
+221 pull requests carried a `## Paths owned` block. In **63 of them the
+declaration did not cover the diff**, leaving 540 files touched but undeclared.
 
 The published figure — a declaration present in 99 of the last 100 pull requests
 — measures the ritual. The corpus says the gap between ritual and substance is
-**31%**.
+**28%**.
 
 `scripts/check_paths_owned.sh` now enforces the substance, and this measurement
 is what calibrated it.
@@ -114,7 +114,11 @@ is what calibrated it.
 > that flattered the finding. Its parser read only bullet lists and compared
 > paths literally, so it missed declarations written as markdown tables —
 > common in this corpus — and treated every glob, brace list and directory
-> prefix as a non-match. Fixing the parser moved the count from 94 to 68.
+> prefix as a non-match. Fixing the parser moved the count from 94 to 63 — in two steps, the second
+> of which the gate itself found: enforcing the new rule on the pull request that
+> introduced it refused a `.gitignore` the parser could not see, because the rule
+> demanded a dot *after* the first character. Dotfiles and `Makefile` were being
+> counted as violations that never were.
 >
 > The two implementations are now cross-checked against each other: a harness
 > replays all 221 declarations through both `check_paths_owned.sh` and

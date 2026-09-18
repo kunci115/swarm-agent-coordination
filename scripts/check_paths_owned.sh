@@ -97,18 +97,20 @@ covers() { # path, then patterns on stdin
 declared_paths() {
     sed -n '/^#\{1,6\}[[:space:]]*[Pp]aths owned/,/^#\{1,6\}[[:space:]]/p' > "$TMP/section"
 
-    {
-        # backticked tokens: `app/x.py`
-        grep -o '`[^`]*`' < "$TMP/section" | tr -d '`'
-        # bullet list items: - app/x.py (new)
-        sed -n 's/^[[:space:]]*[-*][[:space:]][[:space:]]*//p' < "$TMP/section" |
-            sed 's/[[:space:]].*$//'
-    } |
+    # Backticks are an explicit "this is a path" marker, so a backticked token
+    # may be a bare filename: `Makefile`, `.gitignore`. A bullet is not such a
+    # marker, so a bullet item has to look like a path — otherwise a sentence
+    # fragment becomes a pattern.
+    grep -o '`[^`]*`' < "$TMP/section" | tr -d '`' |
         sed 's/[,;:]$//; s|^\./||' |
-        # a path has a separator or an extension, and never starts with a
-        # markdown marker
-        grep -E '^[^*#|[:space:]][^[:space:]]*([/.][^[:space:]]*)+$' |
-        sort -u || true
+        grep -E '^[A-Za-z0-9_.{-][A-Za-z0-9_./*{},-]*$' > "$TMP/tokens" || true
+
+    sed -n 's/^[[:space:]]*[-*][[:space:]][[:space:]]*//p' < "$TMP/section" |
+        sed 's/[[:space:]].*$//; s/[,;:]$//; s|^\./||' |
+        grep -E '^[^*#|[:space:]][^[:space:]]*$' |
+        grep -E '[/.]' >> "$TMP/tokens" || true
+
+    sort -u "$TMP/tokens"
 }
 
 # Compare a declaration against a list of touched paths. Both are files.

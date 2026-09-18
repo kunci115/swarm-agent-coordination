@@ -43,7 +43,7 @@ hold in working memory while doing something else.
 - **CI checks the declaration against the diff, not merely that you wrote one.** A pull request that touches a file it did not declare is refused, and the failure names the files.
 - A glob, a brace list, or a directory is a legitimate declaration — `tests/*`, `app/{api,ui}/*.py`, `docs/booking/`. Declaring broadly is not cheating; the point is that the declaration should predict the diff, so another lane reading it learns what to stay away from. Silence is what fails.
 - If you touch files outside your declared paths, extend the declaration **before** you push, and check the open PRs for conflicts with those paths.
-- Two lanes editing the same file without a declaration is how collisions are found at merge time. The declaration is how they're found earlier. In the case study 68 of 221 declarations did not cover their own diff — the section was written, and it was wrong.
+- Two lanes editing the same file without a declaration is how collisions are found at merge time. The declaration is how they're found earlier. In the case study 63 of 221 declarations did not cover their own diff — the section was written, and it was wrong.
 
 ### 4. Gate your own work before you push
 
