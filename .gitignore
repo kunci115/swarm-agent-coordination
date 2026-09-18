@@ -1,1 +1,10 @@
 .DS_Store
+
+# Corpus export — raw research data, never publish from this repo.
+# Broad patterns on purpose: a copied or renamed export folder must stay
+# ignored too, because one `git add -A` is all it takes to publish it.
+export/
+export*/
+raw/
+raw*/
+*.jsonl
