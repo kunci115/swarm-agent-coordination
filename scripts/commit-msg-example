@@ -1,0 +1,42 @@
+#!/usr/bin/env sh
+# example commit-msg hook — strip AI attribution trailers as the message is
+# written, so history never carries them and never needs rewriting.
+#
+#   ln -sf ../../scripts/commit-msg-example .git/hooks/commit-msg
+#
+# Opt-in. This is a repo-owner preference, not a coordination rule — see the
+# "Repo policy: AI attribution" section of AGENTS.md. Install it only if your
+# repo has chosen to strip.
+#
+# Why a hook and not the rewrite script: strip_ai_trailers.sh works, but it
+# rewrites every SHA in its range. Run it on a pull request that has already
+# gone green and you re-run the whole gate, invalidate every review, and need a
+# force-push to land what was already landable. The hook costs one symlink and
+# the problem stops existing. Repair is the fallback; prevention is the fix.
+#
+# Harnesses add these trailers on their own, every commit, whatever you told
+# them last time — which is exactly the kind of rule that has to be mechanical
+# rather than remembered.
+
+set -eu
+
+MSG_FILE="${1:?commit-msg hook requires the message file}"
+[ -f "$MSG_FILE" ] || exit 0
+
+# -i.bak then rm: the only form of in-place sed that behaves the same on
+# GNU sed and BSD/macOS sed.
+sed -i.bak -E \
+    -e '/^[[:space:]]*(Co-[Aa]uthored-[Bb]y|Authored-[Bb]y|Claude-Session|AI-Model)[[:space:]]*:.*(Claude|GPT|OpenAI|Anthropic|Copilot|Gemini|Cursor|DeepSeek|Codex)/d' \
+    -e '/[Gg]enerated (with|by).*(Claude|GPT|OpenAI|Anthropic|Copilot|Gemini|Cursor|DeepSeek|Codex)/d' \
+    "$MSG_FILE"
+rm -f "$MSG_FILE.bak"
+
+# Collapse the blank lines the deletions left behind, so the message does not
+# end in a run of empty lines where the trailers used to be.
+awk 'BEGIN{blank=0}
+     /^[[:space:]]*$/ {blank++; next}
+     {while (blank>0 && NR>1) {print ""; blank--} blank=0; print}
+    ' "$MSG_FILE" > "$MSG_FILE.tmp"
+mv "$MSG_FILE.tmp" "$MSG_FILE"
+
+exit 0

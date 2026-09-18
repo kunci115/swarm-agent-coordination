@@ -3,10 +3,15 @@ name: lane-gate
 # Enforces the swarm coordination rules on every pull request:
 #   1. branch name honestly declares its base
 #   2. PR body declares the paths it owns
-#   3. AI trailers are stripped from commits
+#   3. migrations hang off the current head of the integration branch
+#   4. every compose-using job carries its own project name
+#   5. (opt-in) AI trailers are stripped from commits
 #
 # Install: copy this file into .github/workflows/ and adjust
 # the INTEGRATION_BRANCH env if your integration branch is not "dev".
+#
+# Checks 3 and 4 skip themselves when the repo has no migrations and no
+# compose usage, so they cost nothing until they apply.
 
 on:
   pull_request:
@@ -18,6 +23,10 @@ permissions:
 
 env:
   INTEGRATION_BRANCH: dev
+  # Repo-owner preference, not a coordination rule — see the "Repo policy: AI
+  # attribution" section of AGENTS.md. Set to 'true' to refuse pull requests
+  # whose commits carry AI attribution trailers.
+  STRIP_AI_TRAILERS: 'false'
 
 jobs:
   lane-gate:
@@ -69,17 +78,37 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
-      - name: AI trailers must be stripped
+      - name: Migration chain must stay linear
+        run: |
+          [ -f scripts/check_migration_chain.sh ] || {
+            echo "::error::scripts/ is not installed — copy the kit's scripts/ directory into this repo."
+            exit 1
+          }
+          sh scripts/check_migration_chain.sh --changed "${{ github.event.pull_request.base.sha }}"
+
+      - name: Every compose job must own its identity
+        run: |
+          [ -f scripts/check_compose_name.sh ] || {
+            echo "::error::scripts/ is not installed — copy the kit's scripts/ directory into this repo."
+            exit 1
+          }
+          sh scripts/check_compose_name.sh
+
+      - name: AI trailers must be stripped (opt-in)
+        if: env.STRIP_AI_TRAILERS == 'true'
         run: |
           BASE="${{ github.event.pull_request.base.sha }}"
           HEAD="${{ github.event.pull_request.head.sha }}"
           TRAILERS=$(git log --format="%b" "$BASE".."$HEAD" | grep -iE "Co-Authored-By:.*(AI|Claude|GPT|Copilot|Gemini|Cursor|DeepSeek)" || true)
           if [ -n "$TRAILERS" ]; then
-            echo "::error::AI trailers found in commit messages. Strip them and force-push:"
+            echo "::error::AI trailers found in commit messages."
             echo "$TRAILERS"
             echo ""
-            echo "  git rebase -i $BASE   # drop/edit the trailers, or:"
+            echo "Repair (rewrites every SHA in the range, re-runs this whole gate):"
             echo "  scripts/strip_ai_trailers.sh $BASE..HEAD && git push --force-with-lease"
+            echo ""
+            echo "Prevention (do this once and the problem stops existing):"
+            echo "  ln -sf ../../scripts/commit-msg-example .git/hooks/commit-msg"
             exit 1
           fi
           echo "No AI trailers found."

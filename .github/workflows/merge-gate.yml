@@ -1,0 +1,76 @@
+name: merge-gate
+
+# The gate is the merge of the combined result, not the green checkmark on any
+# lane. This workflow builds that combined result and tests it.
+#
+# Run it deliberately, from the Actions tab or:
+#   gh workflow run merge-gate.yml -f prs="12,15,19"
+#
+# It never merges anything into the integration branch. It reports, and the
+# merge owner decides — a lane still does not land its own work.
+#
+# Install: copy into .github/workflows/ and set TEST_COMMAND below to whatever
+# proves your project works. A batch with no test run proves only that the
+# merges apply cleanly, and clean application is exactly what the case study
+# saw on the ten-lane landing that produced six defects.
+
+on:
+  workflow_dispatch:
+    inputs:
+      prs:
+        description: 'Pull request numbers to batch, comma- or space-separated (e.g. 12,15,19)'
+        required: true
+        type: string
+      base:
+        description: 'Integration branch to batch onto'
+        required: false
+        default: 'dev'
+        type: string
+
+permissions:
+  contents: read
+  pull-requests: read
+
+env:
+  # EDIT THIS: the command that proves the combined tree works.
+  TEST_COMMAND: 'echo "set TEST_COMMAND in merge-gate.yml" && exit 1'
+
+jobs:
+  merge-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.base }}
+
+      - name: Identify the batch
+        id: batch
+        run: |
+          PRS=$(echo "${{ inputs.prs }}" | tr ',' ' ' | tr -s ' ')
+          echo "prs=$PRS" >> "$GITHUB_OUTPUT"
+          echo "Batching onto ${{ inputs.base }}: $PRS"
+
+      - name: Build and test the combined result
+        run: |
+          git config user.email "merge-gate@local"
+          git config user.name "merge-gate"
+          sh scripts/merge_batch.sh \
+            --base "${{ inputs.base }}" \
+            --test "$TEST_COMMAND" \
+            ${{ steps.batch.outputs.prs }}
+
+      - name: Report
+        if: always()
+        run: |
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "### Combined result is green" >> "$GITHUB_STEP_SUMMARY"
+            echo "PRs \`${{ steps.batch.outputs.prs }}\` merge cleanly onto \`${{ inputs.base }}\` and pass together." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "### Combined result FAILED" >> "$GITHUB_STEP_SUMMARY"
+            echo "PRs \`${{ steps.batch.outputs.prs }}\` do not survive being merged together." >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "Each lane may still be green on its own — that is the normal shape of a seam defect." >> "$GITHUB_STEP_SUMMARY"
+            echo "It belongs to the join, not to any one lane. Do not assign it to a single lane to fix." >> "$GITHUB_STEP_SUMMARY"
+          fi
