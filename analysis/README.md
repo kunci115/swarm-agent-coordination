@@ -99,13 +99,33 @@ pushes, not at review time.
 
 ### Declaring ownership is not the same as declaring it correctly
 
-221 pull requests carried a `## Paths owned` block. In **94 of them the
-declaration did not cover the diff**, leaving 914 files touched but undeclared.
+221 pull requests carried a `## Paths owned` block. In **63 of them the
+declaration did not cover the diff**, leaving 540 files touched but undeclared.
 
 The published figure — a declaration present in 99 of the last 100 pull requests
-— measures the ritual. `check_paths_owned.sh` in this kit measures the same
-thing, and its own header admits it. The corpus says the gap between ritual and
-substance is 42%.
+— measures the ritual. The corpus says the gap between ritual and substance is
+**28%**.
+
+`scripts/check_paths_owned.sh` now enforces the substance, and this measurement
+is what calibrated it.
+
+> **Correction.** The first version of this analysis reported 94 violations and
+> 914 undeclared files. That count was wrong, and it was wrong in the direction
+> that flattered the finding. Its parser read only bullet lists and compared
+> paths literally, so it missed declarations written as markdown tables —
+> common in this corpus — and treated every glob, brace list and directory
+> prefix as a non-match. Fixing the parser moved the count from 94 to 63 — in two steps, the second
+> of which the gate itself found: enforcing the new rule on the pull request that
+> introduced it refused a `.gitignore` the parser could not see, because the rule
+> demanded a dot *after* the first character. Dotfiles and `Makefile` were being
+> counted as violations that never were.
+>
+> The two implementations are now cross-checked against each other: a harness
+> replays all 221 declarations through both `check_paths_owned.sh` and
+> `declared_paths()`/`covered()` here, and they agree on every one. Two
+> implementations agreeing is weak evidence when one was derived from the
+> other, which is why the shell version was written first and the Python
+> brought to match it, not the reverse.
 
 ## Where the numbers still disagree
 

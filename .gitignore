@@ -8,3 +8,7 @@ export*/
 raw/
 raw*/
 *.jsonl
+
+# Python bytecode from the analysis scripts
+__pycache__/
+*.pyc

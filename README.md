@@ -48,7 +48,7 @@ Every incident in the table above is one of those four dependencies going unmana
 | Migration chain forked into two heads | `check_migration_chain.sh` — one head, and no migration cut from a stale parent |
 | Two CI jobs sharing one Compose project name; one job's `down -v` destroying the other's database | `check_compose_name.sh` — a per-run, per-matrix identity or the gate fails |
 | Pool demand 16 against a ceiling of 15; runner quota exhausted | the shared resources register in `AGENTS.md` — ceilings written down and owned |
-| Undeclared file ownership, collisions found at merge time | `check_paths_owned.sh` — declare `## Paths owned` on the first push |
+| Undeclared file ownership, collisions found at merge time | `check_paths_owned.sh` — the declaration must cover the diff, not merely exist (63 of 221 did not) |
 | Branch names that said nothing about their base | `check_branch_base.sh` — a name is a claim, and CI tests the claim |
 
 One finding has no tool and cannot have one. A defect reached production because its test stub was built from the same wrong assumption as the code it tested — the two agreed with each other about something false. No quantity of additional tests written from that assumption could have caught it; only an external source of truth could. That limit is reported in `docs/RESEARCH.md` rather than papered over, because a kit claiming to catch everything is lying about the case that matters most.
@@ -82,7 +82,7 @@ scripts/
   merge_batch.sh            Build a batch of PRs and test them TOGETHER
   check_migration_chain.sh  One migration head; no migration cut from a stale parent
   check_compose_name.sh     Every CI job gets its own Docker Compose identity
-  check_paths_owned.sh      PRs must declare which file paths they own
+  check_paths_owned.sh      PRs declare their paths — and the declaration must cover the diff
   check_branch_base.sh      Branch names must declare their base (feature/ fix/ hotfix/)
   strip_ai_trailers.sh      Strip "Co-Authored-By: <AI model>" traces (opt-in policy)
   pre-push-example          Client-side hook: ask the gate's questions before the push
@@ -123,11 +123,15 @@ cp .github/workflows/merge-gate.yml .github/workflows/   # edit: set TEST_COMMAN
 
 Done. From this commit on, every pull request is mechanically checked for path ownership, branch-name honesty, migration parentage, and Compose identity.
 
-One more step worth the thirty seconds, because the cheapest place to catch any of this is before the push leaves your machine:
+Then install the hook. This is not optional polish, and the corpus is specific about why:
 
 ```bash
 ln -sf ../../scripts/pre-push-example .git/hooks/pre-push
 ```
+
+The migration chain forked **11 times** over the 35 days. **Not one of the eleven was a pull request merge commit.** They happened in integration-round merges, in `dev`→lane back-merges, and in one ordinary feature commit — moments when no pull request existed to gate. By the time each pull request opened, the chain had been repaired, so the gate saw a healthy chain every time, was right every time, and would have missed all eleven.
+
+A gate that only runs on pull requests is a gate on the one moment the damage is already over. The hook runs at the moment it happens.
 
 Then fill in the shared resources register in your new `AGENTS.md`. It ships with the case study's real ceilings as a worked example, and it is the section that repays maintenance most.
 

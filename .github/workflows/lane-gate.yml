@@ -61,22 +61,16 @@ jobs:
               ;;
           esac
 
-      - name: PR body must declare paths owned
+      - name: Paths owned must be declared, and must cover the diff
         run: |
-          BODY=$(gh pr view "${{ github.event.pull_request.number }}" --json body --jq .body)
-          if ! echo "$BODY" | grep -qi "## *paths owned"; then
-            echo "::error::PR body is missing a '## Paths owned' section."
-            echo "Add the file paths this lane touches, e.g.:"
-            echo ""
-            echo "  ## Paths owned"
-            echo "  - src/api/routes/bookings.py"
-            echo "  - migrations/0042_add_field.py (new)"
+          [ -f scripts/check_paths_owned.sh ] || {
+            echo "::error::scripts/ is not installed — copy the kit's scripts/ directory into this repo."
             exit 1
-          fi
-          echo "Paths owned declared:"
-          echo "$BODY" | sed -n '/[Pp]aths owned/,/^## /p' | head -20
+          }
+          sh scripts/check_paths_owned.sh "${{ github.event.pull_request.number }}"
         env:
           GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
 
       - name: Migration chain must stay linear
         run: |

@@ -16,6 +16,7 @@ dependency resolved four years from now does not reproduce anything.
 """
 
 import argparse
+import fnmatch
 import json
 import re
 import statistics
@@ -43,7 +44,16 @@ PUBLISHED = {
 # the unanchored variant also matches issue numbers quoted inside prose and
 # tables, which inflates the pair count without adding real links.
 CLOSES = re.compile(r"^\s*(?:close[sd]?|fixe?[sd]?|resolve[sd]?)\s+#(\d+)", re.I | re.M)
-OWNED_LINE = re.compile(r"^\s*[-*]\s+`?([^\s`(]+)")
+HEADING = re.compile(r"^#{1,6}\s")
+BACKTICKED = re.compile(r"`([^`]*)`")
+BULLET = re.compile(r"^\s*[-*]\s+(\S+)")
+# Backticks are an explicit "this is a path" marker, so a backticked token may
+# be a bare filename: `Makefile`, `.gitignore`. A bullet is not such a marker,
+# so a bullet item has to look like a path — otherwise a sentence fragment
+# becomes a pattern, and a stray `**` from bold text becomes one that matches
+# every file and silently passes the whole check.
+TICK_TOKEN = re.compile(r"^[A-Za-z0-9_.{-][A-Za-z0-9_./*{},-]*$")
+BULLET_TOKEN = re.compile(r"^[^*#|\s][^\s]*$")
 
 
 def load(path):
@@ -59,17 +69,58 @@ def ts(value):
 
 
 def declared_paths(raw):
-    """Paths a PR claimed, parsed from its verbatim '## Paths owned' block."""
+    """Paths a PR claimed, read the way scripts/check_paths_owned.sh reads them.
+
+    Declarations are not always bullet lists. In this corpus they are just as
+    often a markdown table with the path in backticks, so both shapes count.
+    """
     if not raw:
         return set()
     out = set()
+    started = False
     for line in raw.splitlines():
-        if line.strip().lower().startswith("## "):
+        if HEADING.match(line):
+            if started:
+                break
+            if "paths owned" in line.lower():
+                started = True
             continue
-        m = OWNED_LINE.match(line)
+        for tok in BACKTICKED.findall(line):
+            tok = tok.rstrip(",;:").removeprefix("./")
+            if TICK_TOKEN.match(tok):
+                out.add(tok)
+        m = BULLET.match(line)
         if m:
-            out.add(m.group(1).rstrip(",;"))
+            tok = m.group(1).rstrip(",;:").removeprefix("./")
+            if BULLET_TOKEN.match(tok) and ("/" in tok or "." in tok):
+                out.add(tok)
     return out
+
+
+def expand_braces(pattern):
+    """`a/{b,c}/*.py` -> ['a/b/*.py', 'a/c/*.py']. `case` has no brace form."""
+    m = re.search(r"\{([^}]*)\}", pattern)
+    if not m:
+        return [pattern]
+    head, tail = pattern[:m.start()], pattern[m.end():]
+    out = []
+    for option in m.group(1).split(","):
+        out.extend(expand_braces(head + option + tail))
+    return out
+
+
+def covered(path, patterns):
+    """Exact, directory prefix, or glob — matching check_paths_owned.sh.
+
+    fnmatch lets `*` cross `/`, which is what shell `case` does too, so
+    `tests/*` also covers `tests/agents/test_x.py`. The check errs toward
+    accepting a broad declaration rather than rejecting a correct one.
+    """
+    for pattern in patterns:
+        for p in expand_braces(pattern):
+            if path == p or path.startswith(p.rstrip("/") + "/") or fnmatch.fnmatch(path, p):
+                return True
+    return False
 
 
 class Report:
@@ -163,7 +214,7 @@ def main():
     r.check("paths owned, last 100", PUBLISHED["paths_owned_last100"],
             sum(1 for p in last100 if p.get("paths_owned_raw")))
 
-    exact, superset, understated = 0, 0, 0
+    exact, understated = 0, 0
     undeclared_files = 0
     audited = 0
     for p in merged:
@@ -173,11 +224,9 @@ def main():
             continue
         audited += 1
         claimed = declared_paths(raw)
-        missed = files - claimed
+        missed = {f for f in files if not covered(f, claimed)}
         if not missed:
             exact += 1
-            if claimed - files:
-                superset += 1
         else:
             understated += 1
             undeclared_files += len(missed)
