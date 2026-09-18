@@ -1,0 +1,38 @@
+#!/usr/bin/env sh
+# example pre-push hook — install with:  ln -sf ../../scripts/pre-push-example .git/hooks/pre-push
+# Refuses a push that violates lane rules BEFORE it reaches the remote.
+# (Same questions the CI gate asks — asking early is cheaper than failing late.)
+
+set -eu
+ZERO="0000000000000000000000000000000000000000"
+INTEGRATION_BRANCH="${INTEGRATION_BRANCH:-dev}"
+
+while read local_ref local_sha remote_ref remote_sha; do
+    [ "$local_sha" != "$ZERO" ] || continue
+
+    BRANCH=$(git rev-parse --symbolic --abbrev-ref "$local_ref")
+
+    # refuse direct pushes to integration lines
+    if [ "$BRANCH" = "$INTEGRATION_BRANCH" ] || [ "$BRANCH" = "main" ]; then
+        echo "REFUSED: push directly to $BRANCH is not allowed."
+        echo "Cut a lane branch (feature/ fix/ chore/ docs/ from $INTEGRATION_BRANCH, hotfix/ from main),"
+        echo "open a pull request, and let someone else merge it."
+        exit 1
+    fi
+
+    # refuse branches whose name lies about their base
+    DIR=$(dirname "$0")
+    if [ -x "$DIR/check_branch_base.sh" ]; then
+        "$DIR/check_branch_base.sh" "$BRANCH" "$local_sha" || exit 1
+    fi
+
+    # strip AI trailers before they reach the remote
+    if [ -x "$DIR/strip_ai_trailers.sh" ]; then
+        "$DIR/strip_ai_trailers.sh" --check "$remote_sha..$local_sha" || {
+            echo "Fix: scripts/strip_ai_trailers.sh $remote_sha..$local_sha && git push --force-with-lease"
+            exit 1
+        }
+    fi
+done
+
+exit 0

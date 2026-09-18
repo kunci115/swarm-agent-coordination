@@ -1,0 +1,85 @@
+# AGENTS.md — Rules of Engagement for AI Agents
+
+> You are one lane of a multi-agent swarm working on this repository.
+> Other agents are working in parallel on the same repo right now.
+> These rules exist so your work does not destroy theirs, and theirs does not destroy yours.
+> They are enforced mechanically by CI — violating them wastes hours of another agent's work.
+
+## Your identity
+
+- You are a **lane**: one unit of work, executed in your own worktree, delivered as one pull request.
+- A human orchestrator (or an orchestrating agent) assigns work to you. Do not invent scope beyond your assignment.
+- Your lane ends when your pull request is open. Someone else merges it.
+
+## The Five Rules
+
+### 1. Branch from the integration branch, and say so in your name
+
+- `feature/`, `fix/`, `chore/`, `docs/` branches are cut from the integration branch (default: `dev`).
+- `hotfix/` branches are cut from `main` and go back to `main` only.
+- A branch name is a claim about where it was cut from. CI verifies the claim (`scripts/check_branch_base.sh`). A name that declares no base is rejected.
+- Never create branches named after a session ID (`ao/123/fix-stuff`) — a branch name is read by humans and must stay meaningful after the session is gone.
+
+### 2. Never merge your own pull request
+
+- Open the pull request, then **stop**. Another lane, the orchestrator, or a human merges it.
+- The quality gate is the **merge of the combined result**, not your green checkmark. Ten independently-green PRs are exactly how seam defects get in.
+
+### 3. Declare the paths you own
+
+- In the pull request body, first push, add a section:
+
+  ```
+  ## Paths owned
+  - app/api/routers/bookings.py
+  - app/db/migrations/versions/0042_new_migration.py (new)
+  ```
+
+- If you touch files outside your declared paths, extend the declaration **before** you push, and check the open PRs for conflicts with those paths.
+- Two lanes editing the same file without a declaration is how collisions are found at merge time. The declaration is how they're found earlier.
+
+### 4. Gate your own work before you push
+
+- Run the test suite in your own worktree before pushing.
+- If your project uses Docker: give your stack a unique `COMPOSE_PROJECT_NAME` (your lane ID + job). Two lanes sharing a Compose project name share — and destroy — each other's database.
+- If you need shared resources (database connections, ports, runners), check the resource register in this file or in CONTRIBUTING.md, and stay inside its ceilings.
+
+### 5. Leave the repo cleaner than the AI trail you'd otherwise leave
+
+- Strip `Co-Authored-By: <AI model>` and similar AI trailers from your commits before pushing: `scripts/strip_ai_trailers.sh origin/dev..HEAD`.
+- The repo owner decides whether AI trailers appear in history. Respect that decision mechanically, not by asking again.
+
+## Shared resources register
+
+**This is the single most valuable section in this file.** Every incident category
+in the case study behind this kit traces to a dependency that was real but
+unwritten. A resource with no owner and no stated ceiling is not a shared
+resource — it is a future incident with a date on it.
+
+The table below is filled with the real numbers from the case study, so you can
+see what a maintained register looks like. **Replace every value with your own**
+before you rely on it.
+
+| Resource | Ceiling | Owner | How to stay under it |
+|---|---|---|---|
+| Database connection pool | 15 connections | platform lane | Count `turns × connections_per_turn`, plus any background sweep you add — a sweep opens its own session. Sum across *open PRs*, not just your own: the case failed at demand 16 vs ceiling 15, with every lane individually inside a ceiling it could see. |
+| CI runners | 3 self-hosted | orchestrator | Gate in your own worktree first. Expect queueing and **do not kill queued jobs**. The case stalled 8 lanes on an exhausted hosted-runner quota; 9 of those PRs had been green since the previous day. |
+| Docker Compose project name | one per lane **per job** | each lane | Derive it from the run ID + your job name + **the matrix value**, e.g. `dmsx-${RUN_ID}-${JOB}-${MATRIX}`. A workflow-level `env` cannot see matrix values, so two matrix legs that look distinct collide. In the case, the second job attached to the first job's database and the first job's `down -v` destroyed it — latent until parallelism rose. |
+| Migration chain | exactly one linear head | schema lane | Cut your migration from the *current* integration head, never from where your branch started. Re-check for a second head right before you push. Two lanes writing a migration against the same parent is the single largest incident category in the case (40 of 85 PRs touched shared DB resources). |
+| Service ports | one block per lane | each lane | Bind from your lane's assigned block, never a hardcoded default. Two lanes on one port fail as a flaky test, not as a port error. |
+
+Rules for keeping this table honest:
+
+- A ceiling you cannot name is a ceiling you will exceed. Write the number, even a rough one.
+- When you consume a shared resource, state the amount in your PR body next to `## Paths owned`.
+- When you change a ceiling, that change is its own PR — never a side effect of a feature lane.
+
+## When something goes wrong
+
+- If CI fails after your merge was queued: **do not push fixes on top blindly**. Report to the orchestrator; the merge owner decides.
+- If you find a defect that crosses lanes (works in your lane, broken when combined): do not fix it in your lane. Document it in the PR body — it is a coordination incident, and it needs a coordinated fix.
+- If you are blocked by another lane's work: state which PR you are behind, then stop. Do not chase their branch.
+
+## Why these rules exist
+
+They come from a 35-day production case study (229 PRs, 85 classified coordination incidents). The incidents clustered on exactly the dependencies these rules make explicit: migration chains, connection pools, runner quotas, Compose identities, and undeclared file ownership. One ten-lane merge produced six defects invisible from inside every lane — this file is the institutional memory of how that was fixed and prevented.

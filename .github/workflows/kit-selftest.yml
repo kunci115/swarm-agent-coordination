@@ -1,0 +1,34 @@
+name: kit-selftest
+
+# The kit claims a rule nothing tests is only a convention.
+# This workflow is that claim applied to the kit itself: every push and
+# pull request runs verify-kit.sh, which exercises all three scripts
+# against a throwaway repository.
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  selftest:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Scripts must be POSIX sh clean
+        run: |
+          for f in verify-kit.sh scripts/*.sh scripts/pre-push-example; do
+            sh -n "$f" || { echo "::error file=$f::syntax error"; exit 1; }
+          done
+          echo "All scripts parse."
+
+      - name: Run verify-kit.sh
+        run: sh verify-kit.sh

@@ -1,0 +1,85 @@
+name: lane-gate
+
+# Enforces the swarm coordination rules on every pull request:
+#   1. branch name honestly declares its base
+#   2. PR body declares the paths it owns
+#   3. AI trailers are stripped from commits
+#
+# Install: copy this file into .github/workflows/ and adjust
+# the INTEGRATION_BRANCH env if your integration branch is not "dev".
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  pull-requests: read
+  contents: read
+
+env:
+  INTEGRATION_BRANCH: dev
+
+jobs:
+  lane-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out merge result
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Branch name must declare its base
+        run: |
+          HEAD_BRANCH="${{ github.head_ref }}"
+          case "$HEAD_BRANCH" in
+            hotfix/*)
+              echo "hotfix/ lane: must target main"
+              [ "${{ github.base_ref }}" = "main" ] || {
+                echo "::error::hotfix/* branches must target main, not ${{ github.base_ref }}"
+                exit 1
+              }
+              ;;
+            feature/*|fix/*|chore/*|docs/*)
+              echo "lane: must target $INTEGRATION_BRANCH"
+              [ "${{ github.base_ref }}" = "$INTEGRATION_BRANCH" ] || {
+                echo "::error::feature|fix|chore|docs branches must target $INTEGRATION_BRANCH, not ${{ github.base_ref }}"
+                exit 1
+              }
+              ;;
+            *)
+              echo "::error::branch name '$HEAD_BRANCH' declares no base. Use feature/, fix/, chore/, docs/ (from $INTEGRATION_BRANCH) or hotfix/ (from main)."
+              exit 1
+              ;;
+          esac
+
+      - name: PR body must declare paths owned
+        run: |
+          BODY=$(gh pr view "${{ github.event.pull_request.number }}" --json body --jq .body)
+          if ! echo "$BODY" | grep -qi "## *paths owned"; then
+            echo "::error::PR body is missing a '## Paths owned' section."
+            echo "Add the file paths this lane touches, e.g.:"
+            echo ""
+            echo "  ## Paths owned"
+            echo "  - src/api/routes/bookings.py"
+            echo "  - migrations/0042_add_field.py (new)"
+            exit 1
+          fi
+          echo "Paths owned declared:"
+          echo "$BODY" | sed -n '/[Pp]aths owned/,/^## /p' | head -20
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: AI trailers must be stripped
+        run: |
+          BASE="${{ github.event.pull_request.base.sha }}"
+          HEAD="${{ github.event.pull_request.head.sha }}"
+          TRAILERS=$(git log --format="%b" "$BASE".."$HEAD" | grep -iE "Co-Authored-By:.*(AI|Claude|GPT|Copilot|Gemini|Cursor|DeepSeek)" || true)
+          if [ -n "$TRAILERS" ]; then
+            echo "::error::AI trailers found in commit messages. Strip them and force-push:"
+            echo "$TRAILERS"
+            echo ""
+            echo "  git rebase -i $BASE   # drop/edit the trailers, or:"
+            echo "  scripts/strip_ai_trailers.sh $BASE..HEAD && git push --force-with-lease"
+            exit 1
+          fi
+          echo "No AI trailers found."
