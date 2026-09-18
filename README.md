@@ -3,38 +3,72 @@
 [![kit-selftest](https://github.com/kunci115/swarm-agent-coordination/actions/workflows/kit-selftest.yml/badge.svg)](https://github.com/kunci115/swarm-agent-coordination/actions/workflows/kit-selftest.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-**Rules of engagement so multiple AI agents can work in one repository without destroying each other — for the humans operating them, and for the agents themselves (Gemini, Claude, ChatGPT, Hermes, Cursor, or any agent that reads `AGENTS.md`).**
+**A classified record of what actually breaks when a swarm of AI agents builds real software in one repository — and the rules of engagement that caught it.**
 
-Built from one production case study: over 35 days, a swarm of agents built a real information system (a workshop management system, no inter-agent communication) — 1,417 commits, 229 pull requests, 275 issues, 5,787 automated tests. Every coordination incident was classified: 85 pull requests (37%) showed incident indications, concentrated on dependencies unrepresented in any artifact (database migration chains, connection pool ceilings, runner quotas). This kit is the set of patterns that caught them.
+Over 35 days, a fleet of AI agents built a production information system: 1,417 commits, 229 pull requests, 275 issues, 5,787 automated test functions, 48 database tables, 159 agent worktrees. One human orchestrator. **No inter-agent communication of any kind** — every agent coordinated with every other agent only through artifacts in the repository.
 
-> Full research: DSR case study, 6 incident categories, 6 work-quality indicators — see `docs/RESEARCH.md`.
+Every coordination incident in that corpus was classified. 85 of the 229 pull requests (37%) carried one. This repository is that classification, plus the rules that now refuse each failure mechanically.
 
-## The problem this solves
+> Methodology, the full 85-incident classification, quality indicators, and limitations: [`docs/RESEARCH.md`](docs/RESEARCH.md)
 
-When several agents work in parallel on one repo:
+## What actually broke
 
-- They edit the same files and **git reports no conflict**, while the semantics collide
-- They **drain shared resources nobody owns** (database connection pools, CI runner quotas, service ports, Docker Compose project names)
-- **Nobody owns responsibility**, because nobody declared it
-- Merge quality is unknown, because **each lane tested only itself**
-
-The result is seam defects landing behind a wall of green checkmarks. In the case study, one ten-lane merge produced six defects, none visible from inside any lane.
-
-## Every rule traces to an incident, and every incident to a tool
-
-This is the whole kit in one table. The left column is what actually went wrong over 35 days; the right column is what now refuses it mechanically.
-
-| What went wrong | Weight in the case | What refuses it now |
+| Category | Pull requests | What it looked like |
 |---|---|---|
-| Ten lanes merged together produced six seam defects; git reported no conflict on any of them | the headline incident — 4 of the 6 would have reached `dev` | `merge_batch.sh` + `merge-gate.yml` — test the combined tree, not the lanes |
-| Two lanes wrote a migration against the same parent; the chain forked | 40 of 85 flagged PRs touched shared DB resources — the largest category | `check_migration_chain.sh` — one head, and no migration cut from a stale parent |
-| Two gate jobs shared one Compose project name; one job's `down -v` destroyed the other's database | latent for weeks, surfaced when runner count rose | `check_compose_name.sh` — a per-run, per-matrix identity or the gate fails |
-| Connection pool demand 16 against a ceiling of 15, every lane inside a ceiling it could see | 2 incidents, hours of confused debugging | the shared resources register in `AGENTS.md` — ceilings written down and owned |
-| Eight lanes stalled on an exhausted runner quota; nine PRs had been green since the previous day | 2 incidents | the same register: "expect queueing, don't kill queued jobs" |
-| Undeclared file ownership, collisions found at merge time | supporting | `check_paths_owned.sh` — declare `## Paths owned` on the first push |
-| Branch names that said nothing about their base | 0 incidents — prevented | `check_branch_base.sh` — a name is a claim, and CI tests the claim |
+| Rework / supersede | 41 | a PR rewritten by its successor ("Supersedes #67") |
+| Shared database resources | 40 | migration chain forked into two heads; connection pool at 16 against a ceiling of 15; lock contention |
+| Explicit seam defects | 16 | defects visible only where two modules join |
+| Cross-lane dependency | 3 | a lane landed behind the integration branch, needed a back-merge |
+| Runner queue | 2 | 8 lanes stalled on an exhausted CI runner quota |
+| Textual merge conflict | **1** | the only one — and it was preempted, not resolved |
 
-The one textual merge conflict in 229 pull requests was **preempted**, not resolved: nine issues known to touch the same file were assigned to one lane at planning time. Coordination through artifacts works before the fact, not only after it.
+Read the last two rows against each other, because that contrast is the whole finding:
+
+**Sixteen seam defects. One textual conflict.** The failure git is built to catch was the rarest thing that happened. Everything else was semantic — two agents editing different files in ways that contradicted each other, and every tool in the pipeline reporting green.
+
+The worst single incident: ten lanes merged together produced **six defects, not one of them visible from inside any lane**, and git reported no conflict on any of them. Four of the six would have reached the integration branch had each lane merged itself.
+
+And the one textual conflict never happened by luck. Nine issues known to touch the same file were assigned to a single lane at planning time. Coordination through artifacts works *before* the fact, not only after it.
+
+## The principle
+
+**Coordination through artifacts, not conversation.**
+
+Agents in this case never talked to each other. They wrote rules to each other through shared artifacts — ownership declarations, branch conventions, quality gates, resource registers, merge policies — and behaved correctly for as long as those artifacts were explicit and mechanically enforced.
+
+That framing is not new. Malone & Crowston defined coordination as *the management of dependencies between activities*, and named four dependency types: shared resources, producer/consumer, simultaneity, and task/subtask. The finding here is that all four survive the substitution of the actor. Replace human developers with AI agents and the dependencies do not go away — but the informal human channels that used to absorb them do. What is left has to be written down, or it becomes an incident.
+
+Every incident in the table above is one of those four dependencies going unmanaged.
+
+## What refuses it now
+
+| What went wrong | What refuses it |
+|---|---|
+| Ten lanes merged, six seam defects, no git conflict | `merge_batch.sh` + `merge-gate.yml` — test the combined tree, not the lanes |
+| Migration chain forked into two heads | `check_migration_chain.sh` — one head, and no migration cut from a stale parent |
+| Two CI jobs sharing one Compose project name; one job's `down -v` destroying the other's database | `check_compose_name.sh` — a per-run, per-matrix identity or the gate fails |
+| Pool demand 16 against a ceiling of 15; runner quota exhausted | the shared resources register in `AGENTS.md` — ceilings written down and owned |
+| Undeclared file ownership, collisions found at merge time | `check_paths_owned.sh` — declare `## Paths owned` on the first push |
+| Branch names that said nothing about their base | `check_branch_base.sh` — a name is a claim, and CI tests the claim |
+
+One finding has no tool and cannot have one. A defect reached production because its test stub was built from the same wrong assumption as the code it tested — the two agreed with each other about something false. No quantity of additional tests written from that assumption could have caught it; only an external source of truth could. That limit is reported in `docs/RESEARCH.md` rather than papered over, because a kit claiming to catch everything is lying about the case that matters most.
+
+## Prior art, stated plainly
+
+**The merge gate here is a merge queue, and merge queues are old.** Speculative merging — test the queued changes as the group that would land, merge what passed together — has been running in the open in [Zuul](https://zuul-ci.org/docs/zuul/latest/gating.html) since OpenStack, and in Bors, Prow/Tide, [Mergify](https://mergify.com/blog/the-origin-story-of-merge-queues), Graphite, Aviator, and GitHub's own Merge Queue since. `merge_batch.sh` is that idea in a hundred lines of POSIX `sh`, for repositories that have none of them. **If you already run one, run it** — the finding holds either way: green lanes are not a green merge.
+
+The same honesty applies to the rest. Alembic ships `alembic heads`. A unique `COMPOSE_PROJECT_NAME` per CI job is standard Docker advice. None of these mechanisms are inventions here.
+
+What is not standard is the evidence: a production system built end-to-end by agents, with every coordination incident classified against a written codebook and the counts published. The multi-agent software-engineering literature is dominated by literature reviews and synthetic benchmarks, and says so itself — field evidence from real production systems is named as the open gap.
+
+Independent work reaches a compatible conclusion from the opposite direction. [Destefanis & Aste (arXiv:2608.16801, August 2026)](https://arxiv.org/abs/2608.16801) instrument 1,902 benchmark runs of agent teams and find that shared files substitute for repeated one-to-one messaging, cutting output tokens by about 42% at eight agents, and that naming one agent as coordinator yields no reliable improvement. That is this case's claim — coordination can run through artifacts instead of dialogue — established experimentally where this repository establishes it in production.
+
+## Who this is for
+
+- **Solo developer-owners and small teams running agent swarms.** You have the most agents per human and the least platform infrastructure. This costs one `cp` and gives you the register, the vocabulary, and the gates.
+- **Platform and DevOps engineers** whose repositories just started receiving agent-volume pull requests. Your merge queue already exists; the part it does not give you is the **shared resources register** — the largest incident category here.
+- **Engineering managers and tech leads** deciding how far to delegate merge authority to a machine. The quality indicators in `docs/RESEARCH.md` are the quantitative basis for that decision: six defect escapes, five caught in staging, one reaching production.
+- **QA engineers**, for the defect-finder classification and the structural limit above.
 
 ## What's in the kit
 
@@ -55,16 +89,16 @@ scripts/
   commit-msg-example        Client-side hook: strip AI trailers at write time (opt-in)
 verify-kit.sh               Run every script against throwaway repos — 38 checks
 examples/mini-repo/         A minimal repository with the kit already installed
-docs/RESEARCH.md            The case study: methodology, 85-incident classification, quality indicators
+docs/RESEARCH.md            The case study: methodology, 85-incident classification, limitations
 ```
 
-Verify your copy works before you trust it:
+Every script is POSIX `sh` — git, grep, sed, nothing else. Verify your copy before you trust it:
 
 ```bash
 sh verify-kit.sh        # 38 checks, exits non-zero on any failure
 ```
 
-The checks that matter most are the ones you run *before* a merge, not after:
+The checks that pay most are the ones that run *before* a merge, not after:
 
 ```bash
 # does this lane's migration still hang off the current head of dev?
@@ -73,16 +107,6 @@ scripts/check_migration_chain.sh --changed origin/dev
 # do these three PRs survive being merged together?
 scripts/merge_batch.sh --base dev --test "pytest -q" 12 15 19
 ```
-
-## The principle
-
-Every rule here expands one principle: **coordination through artifacts, not conversation.** Agents don't talk to each other. They write rules to each other through shared artifacts — ownership declarations, branch conventions, quality gates, merge policies — and behave correctly as long as those artifacts are explicit and mechanically enforced.
-
-Three rules get violated the most, so start here:
-
-1. **A lane never merges its own pull request.** The quality gate is the merge, not the green checkmark.
-2. **Declare the file paths you own (`## Paths owned`) in your first push.** Collisions get found at merge time unless someone declares them earlier.
-3. **Name your branch for its base** (`feature/`, `fix/`, `chore/`, `docs/` from the integration branch; `hotfix/` from `main`) — and let a script verify it. A rule nothing tests is only a convention; this makes it a fact.
 
 ## Installation (5 minutes, level 1)
 
@@ -103,18 +127,26 @@ One more step worth the thirty seconds, because the cheapest place to catch any 
 ln -sf ../../scripts/pre-push-example .git/hooks/pre-push
 ```
 
+Then fill in the shared resources register in your new `AGENTS.md`. It ships with the case study's real ceilings as a worked example, and it is the section that repays maintenance most.
+
 ## Installation for AGENTS (level 2)
 
-Agents don't read READMEs — they read `AGENTS.md` in the repo root. Copy `AGENTS.md.template` to the root as `AGENTS.md` (or merge it into an existing one). Every agent opened in that repository — Claude Code, Cursor, Hermes, Codex, or any other context-file-reading agent — will find its rules of engagement there, with no verbal briefing needed.
+Agents don't read READMEs — they read `AGENTS.md` in the repo root. Copy `AGENTS.md.template` there (or merge it into an existing one). Every agent opened in that repository — Claude Code, Cursor, Hermes, Codex, Gemini CLI, or any other context-file-reading agent — finds its rules of engagement with no verbal briefing.
 
-This makes the framework self-propagating: a repo that adopts the kit **carries its own rules**, so any agent — today's or next year's model — complies immediately.
+This is what makes the approach self-propagating: a repo that adopts the kit **carries its own rules**, so any agent — today's model or next year's — complies on arrival.
 
 ## Extending the kit (contributions welcome)
 
-- **New incident categories**: found a new coordination failure mode in your agent swarm? Open a PR adding the pattern to the classification scheme in `docs/RESEARCH.md`.
-- **Other platforms**: currently uses GitHub Actions. Ports of `lane-gate.yml` to GitLab CI / Jenkins / others are welcome.
-- **Other agent harnesses**: the example assumes worktree-based agents. Variations for other harnesses are welcome.
-- **Data**: if you run an agent swarm and classify its incidents with this kit, share your distribution (sanitized) — it enriches the shared taxonomy.
+- **New incident categories** — found a coordination failure mode your swarm hit that the six categories don't cover? That is the most valuable contribution there is. It grows the part of this repository that cannot be written from opinion.
+- **Data** — ran an agent swarm and classified its incidents with this codebook? A sanitized distribution enriches the taxonomy. One case is one case, and only more cases fix that.
+- **Other platforms** — GitHub Actions today; GitLab CI, Jenkins, Buildkite ports welcome.
+- **Other migration tools** — `check_migration_chain.sh` reads Alembic's parent pointers; Django, Rails and Flyway need two functions changed.
+
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the branch model and what a new check has to do.
+
+## Citation
+
+The case study behind this repository is a master's thesis in Information Systems Management at Universitas Gunadarma (Rino Alfian, 2026), *Coordination Analysis of Multiple Artificial Intelligence Agents in Information System Development and the Quality of Their Work*. Publication pending; until then, cite this repository and `docs/RESEARCH.md`.
 
 ## License
 
