@@ -1,0 +1,1446 @@
+{
+ "taxonomy_version": 2,
+ "queue_threshold_seconds": 2212,
+ "queue_percentile": 0.9,
+ "pull_requests_considered": 229,
+ "incidents": [
+  {
+   "pr": 5,
+   "categories": [
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "shared_resource_db": [
+     "text[narrated]:\\bmigration chain\\b"
+    ]
+   }
+  },
+  {
+   "pr": 22,
+   "categories": [
+    "cross_lane_dependency",
+    "seam_explicit",
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "cross_lane_dependency": [
+     "text[narrated]:\\bback[- ]?merge\\b"
+    ],
+    "seam_explicit": [
+     "text[narrated]:\\bno conflict\\b"
+    ],
+    "shared_resource_db": [
+     "signal[exposure]:touches-migration-file"
+    ]
+   }
+  },
+  {
+   "pr": 36,
+   "categories": [
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "shared_resource_db": [
+     "text[narrated]:\\bdead ?lock\\b"
+    ]
+   }
+  },
+  {
+   "pr": 40,
+   "categories": [
+    "cross_lane_dependency"
+   ],
+   "evidence": {
+    "cross_lane_dependency": [
+     "text[narrated]:\\bbehind (dev|main|the integration branch)\\b"
+    ]
+   }
+  },
+  {
+   "pr": 43,
+   "categories": [
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "shared_resource_db": [
+     "signal[exposure]:touches-migration-file"
+    ]
+   }
+  },
+  {
+   "pr": 45,
+   "categories": [
+    "cross_lane_dependency"
+   ],
+   "evidence": {
+    "cross_lane_dependency": [
+     "text[narrated]:\\bback[- ]?merge\\b"
+    ]
+   }
+  },
+  {
+   "pr": 59,
+   "categories": [
+    "revert_rework"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\bsupersede[sd]?\\b"
+    ]
+   }
+  },
+  {
+   "pr": 69,
+   "categories": [
+    "revert_rework",
+    "seam_explicit",
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\bsupersede[sd]?\\b"
+    ],
+    "seam_explicit": [
+     "text[narrated]:\\bno conflict\\b"
+    ],
+    "shared_resource_db": [
+     "text[narrated]:\\bmigration chain\\b",
+     "signal[exposure]:touches-migration-file"
+    ]
+   }
+  },
+  {
+   "pr": 70,
+   "categories": [
+    "shared_resource_runner"
+   ],
+   "evidence": {
+    "shared_resource_runner": [
+     "text[narrated]:\\brunner[s]?\\b.{0,40}\\b(queue|quota|exhaust|stall|starv|busy|out of)\\b"
+    ]
+   }
+  },
+  {
+   "pr": 74,
+   "categories": [
+    "revert_rework",
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\brevert(s|ed|ing)?\\b"
+    ],
+    "shared_resource_db": [
+     "signal[exposure]:touches-migration-file"
+    ]
+   }
+  },
+  {
+   "pr": 76,
+   "categories": [
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "shared_resource_db": [
+     "text[narrated]:\\badvisory lock\\b"
+    ]
+   }
+  },
+  {
+   "pr": 77,
+   "categories": [
+    "seam_explicit"
+   ],
+   "evidence": {
+    "seam_explicit": [
+     "text[narrated]:\\bseam\\b"
+    ]
+   }
+  },
+  {
+   "pr": 79,
+   "categories": [
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "shared_resource_db": [
+     "signal[exposure]:touches-migration-file"
+    ]
+   }
+  },
+  {
+   "pr": 81,
+   "categories": [
+    "seam_explicit"
+   ],
+   "evidence": {
+    "seam_explicit": [
+     "text[narrated]:\\bseam\\b"
+    ]
+   }
+  },
+  {
+   "pr": 82,
+   "categories": [
+    "cross_lane_dependency",
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "cross_lane_dependency": [
+     "text[narrated]:\\brebase[sd]? onto (dev|main)\\b"
+    ],
+    "shared_resource_db": [
+     "text[narrated]:\\balembic\\b",
+     "signal[exposure]:touches-migration-file"
+    ]
+   }
+  },
+  {
+   "pr": 83,
+   "categories": [
+    "seam_explicit",
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "seam_explicit": [
+     "text[narrated]:\\bseam\\b"
+    ],
+    "shared_resource_db": [
+     "text[narrated]:\\bmigration chain\\b"
+    ]
+   }
+  },
+  {
+   "pr": 84,
+   "categories": [
+    "seam_explicit",
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "seam_explicit": [
+     "text[narrated]:\\bseam\\b"
+    ],
+    "shared_resource_db": [
+     "signal[exposure]:touches-migration-file"
+    ]
+   }
+  },
+  {
+   "pr": 86,
+   "categories": [
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "shared_resource_db": [
+     "text[narrated]:\\bmigration chain\\b"
+    ]
+   }
+  },
+  {
+   "pr": 87,
+   "categories": [
+    "revert_rework",
+    "seam_explicit"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\brewritten\\b"
+    ],
+    "seam_explicit": [
+     "text[narrated]:\\bseam\\b"
+    ]
+   }
+  },
+  {
+   "pr": 88,
+   "categories": [
+    "revert_rework"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\brevert(s|ed|ing)?\\b"
+    ]
+   }
+  },
+  {
+   "pr": 89,
+   "categories": [
+    "revert_rework"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\brewritten\\b"
+    ]
+   }
+  },
+  {
+   "pr": 92,
+   "categories": [
+    "shared_resource_runner"
+   ],
+   "evidence": {
+    "shared_resource_runner": [
+     "text[narrated]:\\brunner[s]?\\b.{0,40}\\b(queue|quota|exhaust|stall|starv|busy|out of)\\b"
+    ]
+   }
+  },
+  {
+   "pr": 93,
+   "categories": [
+    "seam_explicit"
+   ],
+   "evidence": {
+    "seam_explicit": [
+     "text[narrated]:\\bwhere .{0,20}(meet|join)\\b"
+    ]
+   }
+  },
+  {
+   "pr": 95,
+   "categories": [
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "shared_resource_db": [
+     "signal[exposure]:touches-migration-file"
+    ]
+   }
+  },
+  {
+   "pr": 96,
+   "categories": [
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "shared_resource_db": [
+     "text[narrated]:\\bdead ?lock\\b"
+    ]
+   }
+  },
+  {
+   "pr": 98,
+   "categories": [
+    "revert_rework",
+    "seam_explicit",
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\bredo(ne|ing)?\\b"
+    ],
+    "seam_explicit": [
+     "text[narrated]:\\bseam\\b"
+    ],
+    "shared_resource_db": [
+     "text[narrated]:\\bmigration chain\\b"
+    ]
+   }
+  },
+  {
+   "pr": 99,
+   "categories": [
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "shared_resource_db": [
+     "text[narrated]:\\balembic\\b",
+     "signal[exposure]:touches-migration-file"
+    ]
+   }
+  },
+  {
+   "pr": 126,
+   "categories": [
+    "revert_rework"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\brewritten\\b"
+    ]
+   }
+  },
+  {
+   "pr": 127,
+   "categories": [
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "shared_resource_db": [
+     "text[narrated]:\\bmigration chain\\b"
+    ]
+   }
+  },
+  {
+   "pr": 136,
+   "categories": [
+    "conflict_merge",
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "conflict_merge": [
+     "text[narrated]:\\bmerge conflict\\b"
+    ],
+    "shared_resource_db": [
+     "signal[exposure]:touches-migration-file"
+    ]
+   }
+  },
+  {
+   "pr": 138,
+   "categories": [
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "shared_resource_db": [
+     "text[narrated]:\\bmigration chain\\b"
+    ]
+   }
+  },
+  {
+   "pr": 145,
+   "categories": [
+    "seam_explicit"
+   ],
+   "evidence": {
+    "seam_explicit": [
+     "text[narrated]:\\bseam\\b"
+    ]
+   }
+  },
+  {
+   "pr": 153,
+   "categories": [
+    "seam_explicit"
+   ],
+   "evidence": {
+    "seam_explicit": [
+     "text[narrated]:\\bseam\\b"
+    ]
+   }
+  },
+  {
+   "pr": 155,
+   "categories": [
+    "revert_rework",
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\brevert(s|ed|ing)?\\b"
+    ],
+    "shared_resource_db": [
+     "text[narrated]:\\bdown_revision\\b",
+     "signal[exposure]:touches-migration-file"
+    ]
+   }
+  },
+  {
+   "pr": 156,
+   "categories": [
+    "revert_rework"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\brevert(s|ed|ing)?\\b"
+    ]
+   }
+  },
+  {
+   "pr": 157,
+   "categories": [
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "shared_resource_db": [
+     "text[narrated]:\\bmigration chain\\b"
+    ]
+   }
+  },
+  {
+   "pr": 158,
+   "categories": [
+    "seam_explicit",
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "seam_explicit": [
+     "text[narrated]:\\bseam\\b"
+    ],
+    "shared_resource_db": [
+     "text[narrated]:\\bdown_revision\\b",
+     "signal[exposure]:touches-migration-file"
+    ]
+   }
+  },
+  {
+   "pr": 192,
+   "categories": [
+    "revert_rework",
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\brevert(s|ed|ing)?\\b"
+    ],
+    "shared_resource_db": [
+     "text[narrated]:\\bmigration chain\\b"
+    ]
+   }
+  },
+  {
+   "pr": 193,
+   "categories": [
+    "revert_rework",
+    "seam_explicit"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\bsupersede[sd]?\\b"
+    ],
+    "seam_explicit": [
+     "text[narrated]:\\bwhere .{0,20}(meet|join)\\b"
+    ]
+   }
+  },
+  {
+   "pr": 198,
+   "categories": [
+    "revert_rework"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\bsupersede[sd]?\\b"
+    ]
+   }
+  },
+  {
+   "pr": 220,
+   "categories": [
+    "revert_rework"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\brevert(s|ed|ing)?\\b"
+    ]
+   }
+  },
+  {
+   "pr": 221,
+   "categories": [
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "shared_resource_db": [
+     "text[narrated]:\\bmigration chain\\b"
+    ]
+   }
+  },
+  {
+   "pr": 223,
+   "categories": [
+    "revert_rework",
+    "seam_explicit",
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\brewritten\\b"
+    ],
+    "seam_explicit": [
+     "text[narrated]:\\bno conflict\\b"
+    ],
+    "shared_resource_db": [
+     "text[narrated]:\\balembic\\b",
+     "signal[exposure]:touches-migration-file"
+    ]
+   }
+  },
+  {
+   "pr": 225,
+   "categories": [
+    "seam_explicit"
+   ],
+   "evidence": {
+    "seam_explicit": [
+     "text[narrated]:\\bseam\\b"
+    ]
+   }
+  },
+  {
+   "pr": 227,
+   "categories": [
+    "seam_explicit",
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "seam_explicit": [
+     "text[narrated]:\\bseam\\b"
+    ],
+    "shared_resource_db": [
+     "text[narrated]:\\balembic\\b",
+     "signal[exposure]:touches-migration-file"
+    ]
+   }
+  },
+  {
+   "pr": 230,
+   "categories": [
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "shared_resource_db": [
+     "text[narrated]:\\bmigration chain\\b"
+    ]
+   }
+  },
+  {
+   "pr": 231,
+   "categories": [
+    "revert_rework"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\brevert(s|ed|ing)?\\b"
+    ]
+   }
+  },
+  {
+   "pr": 238,
+   "categories": [
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "shared_resource_db": [
+     "signal[exposure]:touches-migration-file"
+    ]
+   }
+  },
+  {
+   "pr": 239,
+   "categories": [
+    "revert_rework"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\bsupersede[sd]?\\b"
+    ]
+   }
+  },
+  {
+   "pr": 251,
+   "categories": [
+    "revert_rework",
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\brevert(s|ed|ing)?\\b"
+    ],
+    "shared_resource_db": [
+     "signal[exposure]:touches-migration-file"
+    ]
+   }
+  },
+  {
+   "pr": 254,
+   "categories": [
+    "revert_rework"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\brevert(s|ed|ing)?\\b"
+    ]
+   }
+  },
+  {
+   "pr": 258,
+   "categories": [
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "shared_resource_db": [
+     "text[narrated]:\\balembic\\b",
+     "signal[exposure]:touches-migration-file"
+    ]
+   }
+  },
+  {
+   "pr": 262,
+   "categories": [
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "shared_resource_db": [
+     "text[narrated]:\\bmigration chain\\b"
+    ]
+   }
+  },
+  {
+   "pr": 263,
+   "categories": [
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "shared_resource_db": [
+     "signal[exposure]:touches-migration-file"
+    ]
+   }
+  },
+  {
+   "pr": 269,
+   "categories": [
+    "revert_rework"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\brewritten\\b"
+    ]
+   }
+  },
+  {
+   "pr": 276,
+   "categories": [
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "shared_resource_db": [
+     "text[narrated]:\\balembic\\b",
+     "signal[exposure]:touches-migration-file"
+    ]
+   }
+  },
+  {
+   "pr": 277,
+   "categories": [
+    "revert_rework"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\bsupersede[sd]?\\b"
+    ]
+   }
+  },
+  {
+   "pr": 280,
+   "categories": [
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "shared_resource_db": [
+     "signal[exposure]:touches-migration-file"
+    ]
+   }
+  },
+  {
+   "pr": 290,
+   "categories": [
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "shared_resource_db": [
+     "text[narrated]:\\bmigration chain\\b"
+    ]
+   }
+  },
+  {
+   "pr": 299,
+   "categories": [
+    "revert_rework"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\brevert(s|ed|ing)?\\b"
+    ]
+   }
+  },
+  {
+   "pr": 314,
+   "categories": [
+    "revert_rework"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\brewritten\\b"
+    ]
+   }
+  },
+  {
+   "pr": 318,
+   "categories": [
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "shared_resource_db": [
+     "signal[exposure]:touches-migration-file"
+    ]
+   }
+  },
+  {
+   "pr": 323,
+   "categories": [
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "shared_resource_db": [
+     "signal[exposure]:touches-migration-file"
+    ]
+   }
+  },
+  {
+   "pr": 324,
+   "categories": [
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "shared_resource_db": [
+     "text[narrated]:\\bmigration chain\\b"
+    ]
+   }
+  },
+  {
+   "pr": 325,
+   "categories": [
+    "revert_rework"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\bsupersede[sd]?\\b"
+    ]
+   }
+  },
+  {
+   "pr": 339,
+   "categories": [
+    "revert_rework"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\brevert(s|ed|ing)?\\b"
+    ]
+   }
+  },
+  {
+   "pr": 350,
+   "categories": [
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "shared_resource_db": [
+     "signal[exposure]:touches-migration-file"
+    ]
+   }
+  },
+  {
+   "pr": 351,
+   "categories": [
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "shared_resource_db": [
+     "signal[exposure]:touches-migration-file"
+    ]
+   }
+  },
+  {
+   "pr": 352,
+   "categories": [
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "shared_resource_db": [
+     "text[narrated]:\\b(two|multiple|second) heads?\\b"
+    ]
+   }
+  },
+  {
+   "pr": 353,
+   "categories": [
+    "revert_rework",
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\brevert(s|ed|ing)?\\b"
+    ],
+    "shared_resource_db": [
+     "text[narrated]:\\bmigration chain\\b"
+    ]
+   }
+  },
+  {
+   "pr": 362,
+   "categories": [
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "shared_resource_db": [
+     "text[narrated]:\\bmigration chain\\b"
+    ]
+   }
+  },
+  {
+   "pr": 365,
+   "categories": [
+    "revert_rework",
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\brewritten\\b"
+    ],
+    "shared_resource_db": [
+     "signal[exposure]:touches-migration-file"
+    ]
+   }
+  },
+  {
+   "pr": 368,
+   "categories": [
+    "revert_rework"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\bsupersede[sd]?\\b"
+    ]
+   }
+  },
+  {
+   "pr": 370,
+   "categories": [
+    "revert_rework",
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\brevert(s|ed|ing)?\\b"
+    ],
+    "shared_resource_db": [
+     "signal[exposure]:touches-migration-file"
+    ]
+   }
+  },
+  {
+   "pr": 374,
+   "categories": [
+    "revert_rework",
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\brevert(s|ed|ing)?\\b"
+    ],
+    "shared_resource_db": [
+     "signal[exposure]:touches-migration-file"
+    ]
+   }
+  },
+  {
+   "pr": 377,
+   "categories": [
+    "revert_rework",
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\brewritten\\b"
+    ],
+    "shared_resource_db": [
+     "text[narrated]:\\bmigration chain\\b"
+    ]
+   }
+  },
+  {
+   "pr": 378,
+   "categories": [
+    "revert_rework"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\brevert(s|ed|ing)?\\b"
+    ]
+   }
+  },
+  {
+   "pr": 385,
+   "categories": [
+    "revert_rework",
+    "seam_explicit",
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\brevert(s|ed|ing)?\\b"
+    ],
+    "seam_explicit": [
+     "text[narrated]:\\bseam\\b"
+    ],
+    "shared_resource_db": [
+     "signal[exposure]:touches-migration-file"
+    ]
+   }
+  },
+  {
+   "pr": 386,
+   "categories": [
+    "revert_rework",
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\bsupersede[sd]?\\b"
+    ],
+    "shared_resource_db": [
+     "text[narrated]:\\bmigration chain\\b"
+    ]
+   }
+  },
+  {
+   "pr": 388,
+   "categories": [
+    "revert_rework"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\brewritten\\b"
+    ]
+   }
+  },
+  {
+   "pr": 389,
+   "categories": [
+    "revert_rework"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\brewritten\\b"
+    ]
+   }
+  },
+  {
+   "pr": 394,
+   "categories": [
+    "revert_rework"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\brevert(s|ed|ing)?\\b"
+    ]
+   }
+  },
+  {
+   "pr": 399,
+   "categories": [
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "shared_resource_db": [
+     "text[narrated]:\\bmigration chain\\b",
+     "signal[exposure]:touches-migration-file"
+    ]
+   }
+  },
+  {
+   "pr": 414,
+   "categories": [
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "shared_resource_db": [
+     "signal[exposure]:touches-migration-file"
+    ]
+   }
+  },
+  {
+   "pr": 418,
+   "categories": [
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "shared_resource_db": [
+     "signal[exposure]:touches-migration-file"
+    ]
+   }
+  },
+  {
+   "pr": 421,
+   "categories": [
+    "revert_rework"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\brevert(s|ed|ing)?\\b"
+    ]
+   }
+  },
+  {
+   "pr": 422,
+   "categories": [
+    "revert_rework"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\brevert(s|ed|ing)?\\b"
+    ]
+   }
+  },
+  {
+   "pr": 426,
+   "categories": [
+    "revert_rework"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\brevert(s|ed|ing)?\\b"
+    ]
+   }
+  },
+  {
+   "pr": 429,
+   "categories": [
+    "revert_rework"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\brewritten\\b"
+    ]
+   }
+  },
+  {
+   "pr": 431,
+   "categories": [
+    "revert_rework"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\brewritten\\b"
+    ]
+   }
+  },
+  {
+   "pr": 434,
+   "categories": [
+    "revert_rework"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\brework(ed|ing)?\\b"
+    ]
+   }
+  },
+  {
+   "pr": 437,
+   "categories": [
+    "revert_rework"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\brevert(s|ed|ing)?\\b"
+    ]
+   }
+  },
+  {
+   "pr": 440,
+   "categories": [
+    "revert_rework",
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\brevert(s|ed|ing)?\\b"
+    ],
+    "shared_resource_db": [
+     "signal[exposure]:touches-migration-file"
+    ]
+   }
+  },
+  {
+   "pr": 447,
+   "categories": [
+    "revert_rework"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\brevert(s|ed|ing)?\\b"
+    ]
+   }
+  },
+  {
+   "pr": 449,
+   "categories": [
+    "revert_rework"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\brevert(s|ed|ing)?\\b"
+    ]
+   }
+  },
+  {
+   "pr": 450,
+   "categories": [
+    "revert_rework"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\brevert(s|ed|ing)?\\b"
+    ]
+   }
+  },
+  {
+   "pr": 460,
+   "categories": [
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "shared_resource_db": [
+     "text[narrated]:\\bmigration chain\\b"
+    ]
+   }
+  },
+  {
+   "pr": 465,
+   "categories": [
+    "revert_rework"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\brevert(s|ed|ing)?\\b"
+    ]
+   }
+  },
+  {
+   "pr": 467,
+   "categories": [
+    "revert_rework",
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\brevert(s|ed|ing)?\\b"
+    ],
+    "shared_resource_db": [
+     "text[narrated]:\\bmigration chain\\b"
+    ]
+   }
+  },
+  {
+   "pr": 479,
+   "categories": [
+    "revert_rework",
+    "seam_explicit"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\brevert(s|ed|ing)?\\b"
+    ],
+    "seam_explicit": [
+     "text[narrated]:\\bno conflict\\b"
+    ]
+   }
+  },
+  {
+   "pr": 480,
+   "categories": [
+    "revert_rework",
+    "seam_explicit"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\brevert(s|ed|ing)?\\b"
+    ],
+    "seam_explicit": [
+     "text[narrated]:\\bseam\\b"
+    ]
+   }
+  },
+  {
+   "pr": 482,
+   "categories": [
+    "revert_rework"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\brevert(s|ed|ing)?\\b"
+    ]
+   }
+  },
+  {
+   "pr": 483,
+   "categories": [
+    "revert_rework",
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\bsupersede[sd]?\\b"
+    ],
+    "shared_resource_db": [
+     "text[narrated]:\\bmigration chain\\b"
+    ]
+   }
+  },
+  {
+   "pr": 492,
+   "categories": [
+    "revert_rework",
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\brevert(s|ed|ing)?\\b"
+    ],
+    "shared_resource_db": [
+     "text[narrated]:\\bdown_revision\\b",
+     "signal[exposure]:touches-migration-file"
+    ]
+   }
+  },
+  {
+   "pr": 496,
+   "categories": [
+    "revert_rework"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\bsupersede[sd]?\\b"
+    ]
+   }
+  },
+  {
+   "pr": 497,
+   "categories": [
+    "revert_rework"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\brewritten\\b"
+    ]
+   }
+  },
+  {
+   "pr": 498,
+   "categories": [
+    "shared_resource_runner"
+   ],
+   "evidence": {
+    "shared_resource_runner": [
+     "text[narrated]:\\b(queue|quota|exhaust|stall|starv|busy|out of)\\b.{0,40}\\brunner[s]?\\b"
+    ]
+   }
+  },
+  {
+   "pr": 501,
+   "categories": [
+    "revert_rework"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\brewritten\\b"
+    ]
+   }
+  },
+  {
+   "pr": 502,
+   "categories": [
+    "revert_rework"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\brevert(s|ed|ing)?\\b"
+    ]
+   }
+  },
+  {
+   "pr": 504,
+   "categories": [
+    "seam_explicit"
+   ],
+   "evidence": {
+    "seam_explicit": [
+     "text[narrated]:\\bseam\\b"
+    ]
+   }
+  },
+  {
+   "pr": 508,
+   "categories": [
+    "revert_rework",
+    "seam_explicit"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\brewritten\\b"
+    ],
+    "seam_explicit": [
+     "text[narrated]:\\bseam\\b"
+    ]
+   }
+  },
+  {
+   "pr": 509,
+   "categories": [
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "shared_resource_db": [
+     "text[narrated]:\\bdead ?lock\\b"
+    ]
+   }
+  },
+  {
+   "pr": 511,
+   "categories": [
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "shared_resource_db": [
+     "signal[exposure]:touches-migration-file"
+    ]
+   }
+  },
+  {
+   "pr": 514,
+   "categories": [
+    "revert_rework"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\brevert(s|ed|ing)?\\b"
+    ]
+   }
+  },
+  {
+   "pr": 515,
+   "categories": [
+    "shared_resource_db"
+   ],
+   "evidence": {
+    "shared_resource_db": [
+     "signal[exposure]:touches-migration-file"
+    ]
+   }
+  },
+  {
+   "pr": 525,
+   "categories": [
+    "revert_rework"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\brevert(s|ed|ing)?\\b"
+    ]
+   }
+  },
+  {
+   "pr": 538,
+   "categories": [
+    "revert_rework"
+   ],
+   "evidence": {
+    "revert_rework": [
+     "text[narrated]:\\brewritten\\b"
+    ]
+   }
+  }
+ ]
+}

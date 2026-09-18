@@ -95,8 +95,10 @@ docs/RESEARCH.md            The case study: methodology, 85-incident classificat
 Every script is POSIX `sh` — git, grep, sed, nothing else. Verify your copy before you trust it:
 
 ```bash
-sh verify-kit.sh        # 38 checks, exits non-zero on any failure
+make verify             # 38 checks, exits non-zero on any failure
 ```
+
+The numbers in this README are not asserted, they are recomputed. [`analysis/`](analysis/README.md) holds two standard-library scripts that regenerate every published figure from the corpus and re-derive the incident taxonomy independently of the original keyword list — including the three figures that come out **different**, and why. The corpus itself stays private; what it produces does not.
 
 The checks that pay most are the ones that run *before* a merge, not after:
 
