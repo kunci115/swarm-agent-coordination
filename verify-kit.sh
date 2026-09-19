@@ -106,6 +106,10 @@ printf '## Paths owned\n\n| Path | What |\n| --- | --- |\n| `app/a/one.py` | x |
 check_in "$TMP/owned" "markdown table declaration"       0 sh "$CPO" --file "$TMP/b.md" HEAD~1
 printf '## Paths owned\n\n**Six** files, described below.\n' > "$TMP/b.md"
 check_in "$TMP/owned" "bold text is not a wildcard"      1 sh "$CPO" --file "$TMP/b.md" HEAD~1
+# A bare root filename is a normal thing to declare, with or without backticks.
+( cd "$TMP/owned" && echo z > Makefile && git add -A && git commit -qm "add Makefile" )
+owned app/a.py 'tests/*' 'docs/ui/' Makefile
+check_in "$TMP/owned" "bare filename bullet accepted"    0 sh "$CPO" --file "$TMP/b.md" HEAD~1
 printf '## Paths owned\n' > "$TMP/b.md"
 check_in "$TMP/owned" "empty section refused"            1 sh "$CPO" --file "$TMP/b.md" HEAD~1
 cd "$TMP/repo"
