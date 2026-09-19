@@ -25,7 +25,8 @@ jobs:
 
       - name: Scripts must be POSIX sh clean
         run: |
-          for f in verify-kit.sh scripts/*.sh scripts/pre-push-example; do
+          for f in verify-kit.sh scripts/*.sh scripts/pre-push-example scripts/commit-msg-example \
+                   experiments/*/*.sh experiments/*/lanes/*.sh; do
             sh -n "$f" || { echo "::error file=$f::syntax error"; exit 1; }
           done
           echo "All scripts parse."
