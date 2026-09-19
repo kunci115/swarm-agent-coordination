@@ -323,6 +323,24 @@ else
     FAIL=$((FAIL+1)); echo "FAIL: integration branch left untouched"
 fi
 
+# ---------------------------------------------------------------------------
+echo ""
+echo "== experiments/migration-collision =="
+# The instrument has to discriminate, not just fire. Both conditions leave every
+# lane green; only the merge grading differs, and only because of when the
+# second lane cut its migration.
+seam_for() { # condition
+    sh "$KIT_ROOT/experiments/migration-collision/run.sh" --condition "$1" "$TMP/exp-$1" 2>/dev/null |
+        sed -n 's/.*"seam_defect":\([01]\).*/\1/p'
+}
+cd "$TMP"
+got=$(seam_for stale-green)
+if [ "$got" = 1 ]; then PASS=$((PASS+1)); echo "PASS: stale-green produces a seam defect"
+else FAIL=$((FAIL+1)); echo "FAIL: stale-green produces a seam defect (got '$got')"; fi
+got=$(seam_for re-gated)
+if [ "$got" = 0 ]; then PASS=$((PASS+1)); echo "PASS: re-gated does not (negative control)"
+else FAIL=$((FAIL+1)); echo "FAIL: re-gated does not (negative control) (got '$got')"; fi
+
 echo ""
 echo "===== $PASS passed, $FAIL failed ====="
 [ "$FAIL" = 0 ]
