@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { renderBadge, badgeColor } from '../src/badge.mjs';
 import { renderHtml } from '../src/report.mjs';
 import { fetchPrs } from '../src/github.mjs';
+import { readFileSync } from 'node:fs';
+import { loadCodebook, audit } from '../src/classify.mjs';
 
 test('badge shows rounded percent and threshold color', () => {
   const svg = renderBadge(0.37);
@@ -33,4 +35,27 @@ test('fetchPrs reports rate limit clearly', async () => {
 test('fetchPrs distinguishes plain 403 from rate limit', async () => {
   const fake = async () => ({ ok: false, status: 403, headers: new Map(), json: async () => ({}) });
   await assert.rejects(fetchPrs({ owner: 'a', repo: 'b', fetchImpl: fake }), /refused/);
+});
+
+test('a flagged category links its gate and shows the install line', () => {
+  const codebook = loadCodebook();
+  const prs = JSON.parse(readFileSync(new URL('./fixtures/prs.json', import.meta.url), 'utf8'));
+  const html = renderHtml(audit(prs, codebook), 'owner/repo');
+  // the script that refuses seam defects is linked, not merely named
+  assert.match(html, /<a href="[^"]*scripts\/merge_batch\.sh"><code>scripts\/merge_batch\.sh<\/code><\/a>/);
+  // and the row carries a command that installs it
+  assert.match(html, /class="install"><code>cp scripts\/merge_batch\.sh/);
+});
+
+test('a category with no hits shows no install line', () => {
+  const codebook = loadCodebook();
+  const html = renderHtml(audit([], codebook), 'owner/repo');
+  assert.equal(html.includes('class="install"'), false);
+  assert.match(html, /No incidents found/);
+});
+
+test('the report states what prose cannot show', () => {
+  const html = renderHtml(audit([], loadCodebook()), 'owner/repo');
+  assert.match(html, /What this cannot see/);
+  assert.match(html, /not one fork was a pull request merge commit/);
 });
