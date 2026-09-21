@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 import { parseArgs } from 'node:util';
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { spawn } from 'node:child_process';
+import { resolve, join as joinPath } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { loadCodebook, audit } from '../src/classify.mjs';
 import { parseRepo, fetchPrs, fetchFiles, fetchRefStates, referencedNumbers, rateLimitRemaining } from '../src/github.mjs';
 import { migrationOverlaps, supersedeChains, mergeSignals } from '../src/deep.mjs';
@@ -21,6 +23,7 @@ Options:
                            closed without merging. Costs one extra API request
                            per pull request, and finds failures nobody wrote
                            about — which is most of them.
+  --open                   Open the report in your browser when it is written
   --json                   Print JSON result to stdout
   -h, --help               Show help
 
@@ -35,6 +38,7 @@ const { values, positionals } = parseArgs({
     'min-confidence': { type: 'string', default: 'medium' },
     codebook: { type: 'string' },
     deep: { type: 'boolean', default: false },
+    open: { type: 'boolean', default: false },
     json: { type: 'boolean', default: false },
     help: { type: 'boolean', short: 'h', default: false },
   },
@@ -87,10 +91,16 @@ async function main() {
     }
   }
   const result = audit(prs, codebook, { minConfidence: values['min-confidence'], structural });
-  mkdirSync(values.out, { recursive: true });
-  writeFileSync(join(values.out, 'report.json'), JSON.stringify(result, null, 2));
-  writeFileSync(join(values.out, 'report.html'), renderHtml(result, label));
-  writeFileSync(join(values.out, 'badge.svg'), renderBadge(result.incidentRate));
+  const outDir = resolve(values.out);
+  mkdirSync(outDir, { recursive: true });
+  // The output lands in whatever directory the command was run from, which is
+  // usually someone's repository. Make the directory ignore itself so an audit
+  // never turns into an accidental commit.
+  writeFileSync(joinPath(outDir, '.gitignore'), '*\n');
+  writeFileSync(joinPath(outDir, 'report.json'), JSON.stringify(result, null, 2));
+  writeFileSync(joinPath(outDir, 'report.html'), renderHtml(result, label));
+  writeFileSync(joinPath(outDir, 'badge.svg'), renderBadge(result.incidentRate));
+  const reportUrl = pathToFileURL(joinPath(outDir, 'report.html')).href;
   if (values.json) {
     console.log(JSON.stringify(result, null, 2));
     return;
@@ -98,7 +108,25 @@ async function main() {
   console.log(`${label}: ${result.incidentPrs}/${result.totalPrs} PRs (${Math.round(result.incidentRate * 100)}%) show coordination incidents`);
   if (result.structuralOnlyPrs) console.log(`  ${result.structuralOnlyPrs} found by measurement alone — nothing in their text says so`);
   for (const c of result.categories) if (c.count) console.log(`  ${c.label.padEnd(28)} ${String(c.count).padStart(4)}  → ${c.gate}`);
-  console.log(`\nReport: ${join(values.out, 'report.html')}\nBadge:  ${join(values.out, 'badge.svg')}`);
+  console.log('');
+  console.log(`Report: ${reportUrl}`);
+  console.log(`Badge:  ${joinPath(outDir, 'badge.svg')}`);
+  console.log('');
+  console.log('Paste into your README:');
+  console.log(`  ![coordination incidents](${joinPath(values.out, 'badge.svg')})`);
+
+  if (values.open) openInBrowser(reportUrl);
+}
+
+function openInBrowser(url) {
+  const cmd = process.platform === 'darwin' ? 'open'
+    : process.platform === 'win32' ? 'start'
+    : 'xdg-open';
+  try {
+    spawn(cmd, [url], { stdio: 'ignore', detached: true, shell: process.platform === 'win32' }).unref();
+  } catch {
+    // Opening is a convenience; the path was already printed.
+  }
 }
 
 main().catch((err) => {

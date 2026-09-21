@@ -77,3 +77,27 @@ test('the report states what prose cannot show', () => {
   assert.match(html, /What this cannot see/);
   assert.match(html, /not one fork was a pull request merge commit/);
 });
+
+test('the report lands somewhere openable and does not become a commit', async () => {
+  const { execFileSync } = await import('node:child_process');
+  const { mkdtempSync, existsSync, readFileSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const { join } = await import('node:path');
+
+  const out = join(mkdtempSync(join(tmpdir(), 'swarm-audit-')), 'report');
+  const stdout = execFileSync(process.execPath, [
+    new URL('../bin/swarm-audit.mjs', import.meta.url).pathname,
+    '--from-file', new URL('./fixtures/prs.json', import.meta.url).pathname,
+    '--out', out, 'demo/repo',
+  ], { encoding: 'utf8' });
+
+  // A path someone has to go and find is a path that does not get opened.
+  assert.match(stdout, /Report: file:\/\//);
+  // The badge is the roadmap's viral loop, so the markdown is ready to paste.
+  assert.match(stdout, /!\[coordination incidents\]/);
+  // The output lands in whatever repository the command was run from.
+  assert.equal(readFileSync(join(out, '.gitignore'), 'utf8').trim(), '*');
+  for (const f of ['report.html', 'report.json', 'badge.svg']) {
+    assert.ok(existsSync(join(out, f)), `${f} written`);
+  }
+});

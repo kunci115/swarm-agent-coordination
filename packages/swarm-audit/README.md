@@ -8,13 +8,26 @@ GITHUB_TOKEN=... npx swarm-audit owner/private-repo
 npx swarm-audit --from-file prs.json  # offline, local PR export
 ```
 
-Outputs `report.html`, `report.json`, and `badge.svg` in `./swarm-audit-report/`.
+## Where the result goes
 
-Add the badge to your README:
+`./swarm-audit-report/` in the directory you ran from, holding `report.html`,
+`report.json` and `badge.svg`. The run prints a `file://` link, which most
+terminals make clickable, and the badge markdown ready to paste:
 
-```md
-![coordination incidents](./swarm-audit-report/badge.svg)
 ```
+Report: file:///Users/you/project/swarm-audit-report/report.html
+Badge:  swarm-audit-report/badge.svg
+
+Paste into your README:
+  ![coordination incidents](swarm-audit-report/badge.svg)
+```
+
+`--open` launches the report in your browser instead of leaving you a path.
+
+That directory is usually inside someone's repository, so it writes a
+`.gitignore` containing `*` into itself. An audit should not turn into an
+accidental commit. Delete that file if you want to check the report in
+deliberately.
 
 ## Where the codebook comes from
 
