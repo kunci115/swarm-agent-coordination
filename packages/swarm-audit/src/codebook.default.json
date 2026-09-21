@@ -1,0 +1,131 @@
+{
+  "version": "corpus-1",
+  "note": "Derived from analysis/classify.py, the rule set that recovered 80 of the 85 labelled pull requests in the case study corpus. Scored by tools/corpus-check.mjs. 'strong' matches anywhere in title or body; 'weak' matches count only in the title at medium confidence, because these words appear in ordinary prose in any repository that uses the tools they name.",
+  "limits": "This reads pull request prose, so it measures how often a failure was written about. Two categories are known to under-report for structural reasons: runner contention is a property of the CI system rather than of any pull request (in the case study the median pull request waited eleven minutes for a runner while only two narrated it), and migration chain forks frequently occur between pushes and are repaired before review, so no pull request ever mentions them. Both need --deep or the gates in scripts/ to see properly.",
+  "categories": [
+    {
+      "id": "rework_supersede",
+      "label": "Rework / supersede",
+      "gate": "scripts/check_paths_owned.sh — overlapping ownership is what makes one lane rewrite another",
+      "install": "cp scripts/check_paths_owned.sh scripts/ && cp .github/workflows/lane-gate.yml .github/workflows/",
+      "strong": [
+        "\\bsupersede[sd]?\\b",
+        "\\breplaces\\s+#\\d+",
+        "\\bobsoletes\\s+#\\d+",
+        "\\binstead\\s+of\\s+#\\d+",
+        "\\brevert(?:s|ed|ing)?\\b",
+        "\\brework(?:ed|ing)?\\b",
+        "\\brewritten\\b"
+      ],
+      "weak": [
+        "\\bredo(?:ne|ing)?\\b",
+        "\\breapply\\b",
+        "\\bstarted\\s+over\\b"
+      ]
+    },
+    {
+      "id": "shared_resources",
+      "label": "Shared database resources",
+      "gate": "scripts/check_migration_chain.sh + the shared resources register in AGENTS.md",
+      "install": "cp scripts/check_migration_chain.sh scripts/ && ln -sf ../../scripts/pre-push-example .git/hooks/pre-push",
+      "strong": [
+        "\\bmigration\\s+chain\\b",
+        "\\bdown_revision\\b",
+        "\\b(?:two|multiple|second)\\s+heads?\\b",
+        "\\bmerge\\s+migration\\b",
+        "\\bconnection\\s+pool\\b",
+        "\\bpool\\s+(?:size|ceiling|exhaust)",
+        "\\badvisory\\s+lock\\b",
+        "\\bschema\\s+(?:drift|conflict)\\b",
+        "\\bmax_connections\\b",
+        "\\bdead\\s?lock\\w*\\b"
+      ],
+      "weak": [
+        "\\balembic\\b",
+        "\\block\\s+contention\\b",
+        "\\bmigration\\b"
+      ]
+    },
+    {
+      "id": "seam_defect",
+      "label": "Seam defect",
+      "gate": "scripts/merge_batch.sh + .github/workflows/merge-gate.yml — test the combined tree, not the lanes",
+      "install": "cp scripts/merge_batch.sh scripts/ && cp .github/workflows/merge-gate.yml .github/workflows/",
+      "strong": [
+        "\\bseam\\b",
+        "\\bboundary\\s+between\\b",
+        "\\binterface\\s+between\\b",
+        "\\bintegration\\s+(?:point|defect|failure|bug|break)",
+        "\\bcontract\\s+(?:mismatch|between)\\b",
+        "\\bbroke\\s+after\\s+merg",
+        "\\bfails?\\s+(?:only\\s+)?(?:after|when)\\s+merged",
+        "\\bonly\\s+(?:visible|appears)\\s+when\\s+combined\\b",
+        "\\b(?:git|nothing|no\\s+tool)\\s+(?:report(?:ed|s)?|found|flagged)\\s+no\\s+conflict",
+        "\\bno\\s+conflict\\b[^.]{0,60}\\b(?:but|yet|still|however|and\\s+yet)\\b",
+        "\\bcombined\\s+tree\\b",
+        "\\bboth\\s+lanes?\\s+green\\b",
+        "\\bintegration\\s+fix\\b",
+        "\\bgreen\\s+(?:individually|alone|apart)\\b"
+      ],
+      "weak": [
+        "\\bschema\\s+mismatch\\b",
+        "\\bwhere\\s+\\w+\\s+(?:meet|join)s?\\b",
+        "\\bno\\s+conflict\\b"
+      ]
+    },
+    {
+      "id": "cross_lane_dependency",
+      "label": "Cross-lane dependency",
+      "gate": "scripts/check_branch_base.sh — a branch name is a claim about where it was cut from",
+      "install": "cp scripts/check_branch_base.sh scripts/",
+      "strong": [
+        "\\bback-?merge\\b",
+        "\\bdepends\\s+on\\s+#\\d+",
+        "\\bblocked\\s+by\\s+#\\d+",
+        "\\bwaiting\\s+(?:on|for)\\s+#\\d+",
+        "\\bbehind\\s+(?:dev|main|the\\s+integration\\s+branch)\\b",
+        "\\blanded\\s+behind\\b",
+        "\\brebase[sd]?\\s+onto\\s+(?:dev|main)\\b",
+        "\\bunblocks?\\s+(?:the\\s+)?(?:other\\s+)?(?:\\w+\\s+)?pull\\s+requests?\\b",
+        "\\bnothing\\s+has\\s+been\\s+able\\s+to\\s+run\\b"
+      ],
+      "weak": [
+        "\\brebase\\b",
+        "\\bout\\s+of\\s+date\\s+with\\b"
+      ]
+    },
+    {
+      "id": "runner_queue",
+      "label": "Runner queue",
+      "gate": "The CI runner ceiling in the shared resources register in AGENTS.md",
+      "install": "cp AGENTS.md.template AGENTS.md  # then fill in the register",
+      "strong": [
+        "\\brunner[s]?\\b[^.]{0,80}\\b(?:queu\\w*|quota|exhaust\\w*|stall\\w*|starv\\w*|busy|out\\s+of)\\b",
+        "\\b(?:queu\\w*|quota|exhaust\\w*|stall\\w*|starv\\w*|busy|out\\s+of)\\b[^.]{0,80}\\brunner[s]?\\b",
+        "\\bwaiting\\s+for\\s+a\\s+runner\\b",
+        "\\bno\\s+runners?\\s+available\\b",
+        "\\bconcurrency\\s+limit\\b"
+      ],
+      "weak": [
+        "\\bci\\s+quota\\b",
+        "\\bqueued\\s+for\\s+hours\\b"
+      ]
+    },
+    {
+      "id": "textual_conflict",
+      "label": "Textual merge conflict",
+      "gate": "scripts/check_paths_owned.sh — the conflict git does catch, and the rarest kind",
+      "install": "cp scripts/check_paths_owned.sh scripts/",
+      "strong": [
+        "\\bmerge\\s+conflicts?\\b",
+        "\\bresolv(?:e|es|ed|ing)\\s+(?:the\\s+)?(?:merge\\s+)?conflicts?\\b",
+        "\\bconflicts?\\s+in\\s+\\S+\\.\\w+",
+        "\\bboth\\s+modified\\b",
+        "<<<<<<<"
+      ],
+      "weak": [
+        "\\bconflicted?\\b"
+      ]
+    }
+  ]
+}
