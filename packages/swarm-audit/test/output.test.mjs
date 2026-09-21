@@ -47,11 +47,29 @@ test('a flagged category links its gate and shows the install line', () => {
   assert.match(html, /class="install"><code>cp scripts\/merge_batch\.sh/);
 });
 
-test('a category with no hits shows no install line', () => {
+test('a category with no hits names its gate but offers no install line', () => {
   const codebook = loadCodebook();
   const html = renderHtml(audit([], codebook), 'owner/repo');
+  // Nothing to fix, so nothing to install — but the reader still learns what
+  // was checked, which is most of what an empty report has to give.
   assert.equal(html.includes('class="install"'), false);
-  assert.match(html, /No incidents found/);
+  assert.match(html, /checked, nothing found/);
+  assert.match(html, /merge_batch\.sh/);
+});
+
+test('a percentage is reported against measured baselines', () => {
+  const html = renderHtml(audit([], loadCodebook()), 'owner/repo');
+  assert.match(html, /Measured elsewhere/);
+  assert.match(html, /sindresorhus\/got/);
+  assert.match(html, /the case study corpus/);
+  assert.match(html, /clean on every rule/);
+});
+
+test('the report does not claim what it did not measure', () => {
+  const html = renderHtml(audit([], loadCodebook()), 'owner/repo');
+  // It used to assert that git reported no conflicts for any of these, which
+  // was never checked.
+  assert.equal(/Git reports none of these as conflicts/.test(html), false);
 });
 
 test('the report states what prose cannot show', () => {

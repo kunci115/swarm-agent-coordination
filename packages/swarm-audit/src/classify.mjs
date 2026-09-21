@@ -8,6 +8,9 @@ export function loadCodebook(path) {
     categories: raw.categories.map((c) => ({
       ...c,
       strongRe: c.strong.map((p) => new RegExp(p, 'i')),
+      // Patterns that carry real recall but do not deserve to be called
+      // certain. They match anywhere, like strong, and report medium.
+      moderateRe: (c.moderate ?? []).map((p) => new RegExp(p, 'i')),
       weakRe: c.weak.map((p) => new RegExp(p, 'i')),
     })),
   };
@@ -18,6 +21,10 @@ function matchCategory(cat, title, body) {
   for (const re of cat.strongRe) {
     const m = text.match(re);
     if (m) return { id: cat.id, confidence: 'high', evidence: m[0] };
+  }
+  for (const re of cat.moderateRe) {
+    const m = text.match(re);
+    if (m) return { id: cat.id, confidence: 'medium', evidence: m[0] };
   }
   for (const re of cat.weakRe) {
     const inTitle = title.match(re);

@@ -1,6 +1,6 @@
 {
   "version": "corpus-1",
-  "note": "Derived from analysis/classify.py, the rule set that recovered 80 of the 85 labelled pull requests in the case study corpus. Scored by tools/corpus-check.mjs. 'strong' matches anywhere in title or body; 'weak' matches count only in the title at medium confidence, because these words appear in ordinary prose in any repository that uses the tools they name.",
+  "note": "Derived from analysis/classify.py, the rule set that recovered 80 of the 85 labelled pull requests in the case study corpus. Scored by tools/corpus-check.mjs. 'strong' matches anywhere and reports high confidence; 'moderate' matches anywhere and reports medium, for patterns that carry recall without certainty; 'weak' matches count only in the title at medium confidence, because these words appear in ordinary prose in any repository that uses the tools they name.",
   "limits": "This reads pull request prose, so it measures how often a failure was written about. Two categories are known to under-report for structural reasons: runner contention is a property of the CI system rather than of any pull request (in the case study the median pull request waited eleven minutes for a runner while only two narrated it), and migration chain forks frequently occur between pushes and are repaired before review, so no pull request ever mentions them. Both need --deep or the gates in scripts/ to see properly.",
   "categories": [
     {
@@ -12,15 +12,17 @@
         "\\bsupersede[sd]?\\b",
         "\\breplaces\\s+#\\d+",
         "\\bobsoletes\\s+#\\d+",
-        "\\binstead\\s+of\\s+#\\d+",
-        "\\brevert(?:s|ed|ing)?\\b",
-        "\\brework(?:ed|ing)?\\b",
-        "\\brewritten\\b"
+        "\\binstead\\s+of\\s+#\\d+"
       ],
       "weak": [
         "\\bredo(?:ne|ing)?\\b",
         "\\breapply\\b",
         "\\bstarted\\s+over\\b"
+      ],
+      "moderate": [
+        "\\brevert(?:s|ed|ing)?\\b",
+        "\\brework(?:ed|ing)?\\b",
+        "\\brewritten\\b"
       ]
     },
     {
