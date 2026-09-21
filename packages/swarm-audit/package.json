@@ -1,11 +1,40 @@
 {
   "name": "swarm-audit",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Audit a repository's pull request history for multi-agent coordination incidents.",
-  "type": "module",
-  "bin": { "swarm-audit": "bin/swarm-audit.mjs" },
-  "engines": { "node": ">=20" },
-  "scripts": { "test": "node --test test/*.test.mjs" },
+  "keywords": [
+    "ai-agents",
+    "multi-agent",
+    "coordination",
+    "pull-requests",
+    "code-review",
+    "devops",
+    "agents-md",
+    "audit"
+  ],
+  "homepage": "https://github.com/kunci115/swarm-agent-coordination/tree/main/packages/swarm-audit",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kunci115/swarm-agent-coordination.git",
+    "directory": "packages/swarm-audit"
+  },
+  "bugs": {
+    "url": "https://github.com/kunci115/swarm-agent-coordination/issues"
+  },
   "license": "MIT",
-  "files": ["bin", "src"]
+  "type": "module",
+  "bin": {
+    "swarm-audit": "bin/swarm-audit.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  },
+  "files": [
+    "bin",
+    "src",
+    "LICENSE"
+  ]
 }

@@ -65,6 +65,26 @@ failures that matter most are the ones nobody wrote down.
 
 It costs one API request per pull request, which is why it is not the default.
 
+## What it reports on an ordinary repository
+
+Measured today, from a clean install against the live API, unauthenticated:
+
+| repository | incident rate |
+|---|---|
+| `sindresorhus/got` | 0% of 60 |
+| `vercel/swr` | 2% of 60 |
+| `kunci115/swarm-agent-coordination` | **60% of 10** |
+
+The first two are the point: a human-maintained repository scores near zero, so
+a number from this tool means something. The third is the failure mode worth
+knowing before you trust a score — **this repository is about coordination
+incidents, so its pull requests are full of the vocabulary.** The classifier
+cannot tell a pull request that *caused* a seam defect from one that *discusses*
+them.
+
+Any repository whose subject matter is testing, merging, migrations or CI will
+read high for the same reason. Read the flagged list, not just the percentage.
+
 ## What this cannot see
 
 The audit reads pull request prose, so it measures **how often a failure was
