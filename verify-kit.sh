@@ -329,6 +329,49 @@ fi
 
 # ---------------------------------------------------------------------------
 echo ""
+echo "== merge_if_authorized.sh =="
+# Authority to land work is declared, so the interesting tests are the
+# refusals: a policy that cannot be read, one that tries to switch off the
+# combined gate, and each condition failing on its own.
+MIA="$KIT_ROOT/scripts/merge_if_authorized.sh"
+POL="$KIT_ROOT/.swarm/merge-policy.yml"
+batch() { : > "$TMP/batch.tsv"; for row in "$@"; do printf '%s\n' "$row" >> "$TMP/batch.tsv"; done; }
+
+batch "$(printf '12\tlane-a\tapp/api/routes.py')" "$(printf '15\tlane-b\tapp/ui/page.html')"
+check "clean batch authorized"            0 sh "$MIA" --policy "$POL" --explain "$TMP/batch.tsv"
+
+batch "$(printf '12\tlane-a\tapp/db/migrations/versions/0042_x.py')"
+check "requires_human path refused"       1 sh "$MIA" --policy "$POL" --explain "$TMP/batch.tsv"
+
+batch "$(printf '12\torchestrator\tapp/api/routes.py')"
+MERGER=orchestrator
+export MERGER
+check "lane merging its own work refused" 1 sh "$MIA" --policy "$POL" --explain "$TMP/batch.tsv"
+unset MERGER
+
+batch "$(printf '1\ta\tx.py')" "$(printf '2\tb\tx.py')" "$(printf '3\tc\tx.py')" \
+      "$(printf '4\td\tx.py')" "$(printf '5\te\tx.py')" "$(printf '6\tf\tx.py')"
+check "batch over the ceiling refused"    1 sh "$MIA" --policy "$POL" --explain "$TMP/batch.tsv"
+
+batch "$(printf '12\tlane-a\tapp/api/routes.py')"
+GATE_RESULT=red
+export GATE_RESULT
+check "red combined gate refused"         1 sh "$MIA" --policy "$POL" --explain "$TMP/batch.tsv"
+unset GATE_RESULT
+
+check "missing policy refused"            1 sh "$MIA" --policy "$TMP/absent.yml" --explain "$TMP/batch.tsv"
+
+sed 's/^require_combined_gate: true/require_combined_gate: false/' "$POL" > "$TMP/no-gate.yml"
+check "policy disabling the gate refused" 1 sh "$MIA" --policy "$TMP/no-gate.yml" --explain "$TMP/batch.tsv"
+
+sed 's/^version: 1/version: 9/' "$POL" > "$TMP/v9.yml"
+check "unknown policy version refused"    1 sh "$MIA" --policy "$TMP/v9.yml" --explain "$TMP/batch.tsv"
+
+sed 's/^test_command: .*/test_command:/' "$POL" > "$TMP/no-test.yml"
+check "policy with no test_command refused" 1 sh "$MIA" --policy "$TMP/no-test.yml" --explain "$TMP/batch.tsv"
+
+# ---------------------------------------------------------------------------
+echo ""
 echo "== experiments/migration-collision =="
 # The instrument has to discriminate, not just fire. Both conditions leave every
 # lane green; only the merge grading differs, and only because of when the

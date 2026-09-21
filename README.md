@@ -78,7 +78,10 @@ AGENTS.md.template          Rules of engagement for agents — paste into your r
   lane-gate.yml             Workflow: enforce the rules on every pull request
   merge-gate.yml            Workflow: test the combined result before anything lands
   kit-selftest.yml          Workflow: the kit checking itself (Linux + macOS)
+AGENTS.md.template          (see above)
+.swarm/merge-policy.yml     Declares when a machine may land work — refuses by default
 scripts/
+  merge_if_authorized.sh    Land a batch only if every declared condition holds
   merge_batch.sh            Build a batch of PRs and test them TOGETHER
   check_migration_chain.sh  One migration head; no migration cut from a stale parent
   check_compose_name.sh     Every CI job gets its own Docker Compose identity
@@ -87,7 +90,7 @@ scripts/
   strip_ai_trailers.sh      Strip "Co-Authored-By: <AI model>" traces (opt-in policy)
   pre-push-example          Client-side hook: ask the gate's questions before the push
   commit-msg-example        Client-side hook: strip AI trailers at write time (opt-in)
-verify-kit.sh               Run every script against throwaway repos — 49 checks
+verify-kit.sh               Run every script against throwaway repos — 58 checks
 experiments/                Reproduce the failures on demand — see experiments/README.md
 examples/mini-repo/         A minimal repository with the kit already installed
 docs/RESEARCH.md            The case study: methodology, 85-incident classification, limitations
@@ -96,7 +99,7 @@ docs/RESEARCH.md            The case study: methodology, 85-incident classificat
 Every script is POSIX `sh` — git, grep, sed, nothing else. Verify your copy before you trust it:
 
 ```bash
-make verify             # 49 checks, exits non-zero on any failure
+make verify             # 58 checks, exits non-zero on any failure
 ```
 
 The numbers in this README are not asserted, they are recomputed. [`analysis/`](analysis/README.md) holds two standard-library scripts that regenerate every published figure from the corpus and re-derive the incident taxonomy independently of the original keyword list — including the three figures that come out **different**, and why. The corpus itself stays private; what it produces does not.
@@ -109,6 +112,9 @@ scripts/check_migration_chain.sh --changed origin/dev
 
 # do these three PRs survive being merged together?
 scripts/merge_batch.sh --base dev --test "pytest -q" 12 15 19
+
+# and may a machine land them, according to the policy this repo declares?
+scripts/merge_if_authorized.sh --dry-run 12 15 19
 ```
 
 ## Installation (5 minutes, level 1)

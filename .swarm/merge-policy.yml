@@ -1,0 +1,47 @@
+# Merge authority for this repository.
+#
+# Whether a machine may land work is a delegation decision, and this file is
+# where it is made — not in a flag, not in someone's shell history. The case
+# study behind this kit recorded one distinct merger and zero self-merges
+# across 229 pull requests, so the default here is to refuse.
+#
+# scripts/merge_if_authorized.sh reads this file. An absent or unparseable
+# policy is a refusal, never a default-allow.
+#
+# Format: a deliberately small subset of YAML — `key: value` lines, and lists
+# written as `key:` followed by `  - item`. Parsed with grep and sed, because
+# the rest of this kit has no dependencies and this file must not be the one
+# that introduces a YAML library.
+
+version: 1
+
+# The gate is the merge of the combined result, not a green checkmark on any
+# lane. Ten independently-green pull requests is exactly how seam defects get
+# in: in the case study one ten-lane landing produced six defects, none visible
+# from inside any lane, and git reported no conflict on any of them.
+#
+# This is the one setting with no "false". A policy that gates on each lane's
+# own checks rebuilds the failure this kit exists to prevent, so the script
+# refuses to run rather than honour it.
+require_combined_gate: true
+
+# What proves the combined tree works. Run once, on the merged result.
+test_command: make check
+
+# A lane never merges its own pull request.
+require_distinct_merger: true
+
+# Changes under these paths are never landed automatically, whatever the gate
+# says. Each one is somewhere the corpus showed a gate cannot see the failure:
+# migration forks happen between pushes and are repaired before review, and a
+# workflow change can disable the very check that would have caught it.
+requires_human:
+  - app/db/migrations/
+  - migrations/
+  - .github/workflows/
+  - AGENTS.md
+  - .swarm/merge-policy.yml
+
+# Ceiling on how much lands in one batch. Bigger batches hide which change
+# caused a failure; the case study's worst incident was ten lanes at once.
+max_batch: 5

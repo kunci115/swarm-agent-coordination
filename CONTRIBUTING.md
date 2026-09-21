@@ -9,6 +9,30 @@ This repository runs on the rules it ships. If you have read `AGENTS.md.template
 - Cut `feature/`, `fix/`, `chore/`, `docs/` from `dev`. Cut `hotfix/` from `main`.
 - A branch name is a claim about where it was cut from, and `lane-gate.yml` tests the claim. A name that declares no base is refused.
 
+## How work lands here
+
+`dev` is protected, and the protection is part of the coordination model rather
+than a detail of this one repository's settings:
+
+- the three checks must pass — `lane-gate`, and the self-test on Linux and macOS
+- **branches must be up to date with `dev` before merging.** This is the setting
+  that matters. Without it a branch sits green against a base that changed
+  underneath it, and the experiment in `experiments/migration-collision`
+  measures exactly what that costs: two lanes, both green, merge red, no textual
+  conflict. With it, the gate re-runs against the base the branch will actually
+  land on.
+- force pushes and deletions are refused; administrators are not exempted from
+  the checks by habit, only deliberately
+- no required reviewer, because there is no second person here. Review is not
+  what this repository relies on — the gates are
+
+Auto-merge is enabled, so `gh pr merge <n> --auto --merge` lands a branch the
+moment its checks pass. Use it. A pull request that sits green and unmerged is
+the queue this kit exists to keep moving.
+
+For a batch rather than one branch, `scripts/merge_if_authorized.sh` evaluates
+`.swarm/merge-policy.yml` and tests the combined tree before anything lands.
+
 ## Before you push
 
 ```bash
