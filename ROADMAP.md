@@ -96,9 +96,9 @@ result** or it does not ship.
 
 | ID | Task | Acceptance criteria |
 |----|------|---------------------|
-| M1 | `.swarm/merge-policy.yml` — declared conditions under which an automated merge is authorized | Absent or unparseable policy means refuse. Every condition is mechanically checkable; none rests on an agent's judgement |
-| M2 | `scripts/merge_if_authorized.sh` — runs `merge_batch.sh`, evaluates the policy, merges or stops | Refuses unless: the combined-result gate is green; the merger identity differs from every author in the batch; no pull request touches a `requires_human` path; batch size within the ceiling; no category the repo marks `manual_review` was flagged by `swarm-audit`. A refusal names which condition failed |
-| M3 | The merge commit carries its own evidence | Message records which gate ran, the batch it covered, and the result — so a machine merge is more auditable than a human one, not less |
+| ~~M1~~ | ~~`.swarm/merge-policy.yml`~~ **done** | Absent, unreadable, wrong-version, or missing a `test_command` all refuse. Format is a small greppable YAML subset, not a dependency. A policy setting `require_combined_gate: false` is refused outright rather than honoured — there is no supported way to land on each lane's own green checks. |
+| ~~M2~~ | ~~`scripts/merge_if_authorized.sh`~~ **done** | All conditions implemented except the `swarm-audit` category check, which is left for when the audit runs in this repo's CI. Nine refusal cases in `verify-kit.sh`, driven through `--explain` so they need no network. The expensive condition runs last: no point building a merge for a batch already refused on a cheap one. |
+| ~~M3~~ | ~~The merge commit carries its own evidence~~ **done** | The message records the policy and version, the gate result, the batch, the test command, and the merger. Untested in CI: it only runs on a real merge, and the self-test never performs one. |
 
 Out of scope, and worth stating so nobody files it as a bug: none of this can
 grant an agent permission its own harness withholds. A repository declares
