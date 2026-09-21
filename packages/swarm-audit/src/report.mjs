@@ -20,7 +20,7 @@ export function renderHtml(result, repoLabel) {
     })
     .join('');
   const flagged = result.flagged
-    .map((f) => `<li><a href="${esc(f.url)}">#${f.number}</a> ${esc(f.title)}<div class="muted">${f.hits.map((h) => `${esc(h.id)} (${h.confidence}: "${esc(h.evidence)}")`).join(', ')}</div></li>`)
+    .map((f) => `<li><a href="${esc(f.url)}">#${f.number}</a> ${esc(f.title)}<div class="muted">${f.hits.map((h) => (h.kind === 'structural' ? `${esc(h.id)} <b>measured</b>: ${esc(h.evidence)}` : `${esc(h.id)} (${h.confidence}: "${esc(h.evidence)}")`)).join(', ')}</div></li>`)
     .join('');
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>swarm-audit: ${esc(repoLabel)}</title><style>
 :root{--bg:#fff;--fg:#1f1e1d;--muted:#6b6a65;--line:#e4e2da;--accent:#A32D2D}
@@ -39,6 +39,7 @@ code{font-family:ui-monospace,monospace;font-size:.85em}
 <p>${result.incidentPrs} of ${result.totalPrs} pull requests show a coordination incident. Git reports none of these as conflicts.</p>
 <div class="wrap"><table><thead><tr><th>Category</th><th class="num">PRs</th><th>Gate that refuses it</th></tr></thead><tbody>${rows}</tbody></table></div>
 <h2>Flagged pull requests</h2><ol>${flagged || '<li class="muted">None</li>'}</ol>
+${result.structuralOnlyPrs ? `<p><b>${result.structuralOnlyPrs}</b> of these were found by measurement alone — nothing in their text says anything went wrong.</p>` : ''}
 <h2>What this cannot see</h2>
 <p class="muted">The audit reads pull request prose, so it counts how often a failure was <em>written about</em>. Two categories under-report for structural reasons. Runner contention belongs to the CI system rather than to any pull request: in the corpus behind this codebook the median pull request waited eleven minutes for a runner and 155 of 226 waited over five, while two narrated it. Migration chain forks usually happen between pushes and are repaired before review, so no pull request mentions them — that chain forked eleven times and not one fork was a pull request merge commit. Both need the gates above, installed, rather than a better report.</p>
 <p class="muted">Keyword-based classification. Treat low-confidence hits as leads, not verdicts.</p>

@@ -39,20 +39,28 @@ export function classifyPr(pr, codebook) {
   return hits;
 }
 
-export function audit(prs, codebook, { minConfidence = 'medium' } = {}) {
+export function audit(prs, codebook, { minConfidence = 'medium', structural = new Map() } = {}) {
   const rank = { low: 0, medium: 1, high: 2 };
   const floor = rank[minConfidence];
   const byCategory = Object.fromEntries(codebook.categories.map((c) => [c.id, 0]));
   const flagged = [];
   for (const pr of prs) {
-    const hits = classifyPr(pr, codebook).filter((h) => rank[h.confidence] >= floor);
+    const text = classifyPr(pr, codebook)
+      .filter((h) => rank[h.confidence] >= floor)
+      .map((h) => ({ ...h, kind: 'text' }));
+    // Structural hits are never filtered by confidence: they are measurements,
+    // not readings of prose, and the confidence ladder describes how sure we
+    // are about a word.
+    const hits = [...text, ...(structural.get(pr.number) ?? [])];
     if (hits.length === 0) continue;
     for (const h of hits) byCategory[h.id] += 1;
     flagged.push({ number: pr.number, title: pr.title, url: pr.html_url, hits });
   }
   const total = prs.length;
+  const structuralOnly = flagged.filter((f) => f.hits.every((h) => h.kind === 'structural')).length;
   return {
     codebookVersion: codebook.version,
+    structuralOnlyPrs: structuralOnly,
     minConfidence,
     totalPrs: total,
     incidentPrs: flagged.length,

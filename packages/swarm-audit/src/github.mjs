@@ -31,3 +31,48 @@ export async function fetchPrs({ owner, repo, token, limit = 500, fetchImpl = fe
   }
   return prs.slice(0, limit);
 }
+
+async function api(path, { token, fetchImpl = fetch }) {
+  const headers = { Accept: 'application/vnd.github+json', 'User-Agent': 'swarm-audit' };
+  if (token) headers.Authorization = `Bearer ${token}`;
+  const res = await fetchImpl(`https://api.github.com${path}`, { headers });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`GitHub API error ${res.status} on ${path}`);
+  return res.json();
+}
+
+/**
+ * Attach the file list to each pull request. One request per pull request, so
+ * the caller decides whether that is affordable — this is what --deep costs.
+ */
+export async function fetchFiles({ owner, repo, prs, token, fetchImpl = fetch, onProgress }) {
+  let done = 0;
+  for (const pr of prs) {
+    const files = await api(`/repos/${owner}/${repo}/pulls/${pr.number}/files?per_page=100`, { token, fetchImpl });
+    pr.files = (files ?? []).map((f) => f.filename);
+    done += 1;
+    onProgress?.(done, prs.length);
+  }
+  return prs;
+}
+
+/**
+ * Resolve referenced numbers to { isPr, merged, closed }. A number in a body is
+ * just an integer: in the corpus behind this tool three quarters of them point
+ * at issues, so each one is looked up rather than assumed.
+ */
+export async function fetchRefStates({ owner, repo, numbers, token, fetchImpl = fetch }) {
+  const states = new Map();
+  for (const n of numbers) {
+    const pr = await api(`/repos/${owner}/${repo}/pulls/${n}`, { token, fetchImpl });
+    if (!pr) { states.set(n, { isPr: false }); continue; }
+    states.set(n, { isPr: true, merged: Boolean(pr.merged_at), closed: pr.state === 'closed' });
+  }
+  return states;
+}
+
+/** Numbers referenced in a body, as integers. */
+export function referencedNumbers(pr) {
+  return [...new Set([...String(pr.body ?? '').matchAll(/#(\d+)/g)].map((m) => Number(m[1])))]
+    .filter((n) => n !== pr.number);
+}

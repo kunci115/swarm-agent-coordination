@@ -22,6 +22,7 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { parseArgs } from 'node:util';
 import { loadCodebook, audit } from '../src/classify.mjs';
+import { migrationOverlaps } from '../src/deep.mjs';
 
 // codebook id -> label id in existing_labels.csv
 const ALIAS = {
@@ -38,6 +39,7 @@ const { values } = parseArgs({
     export: { type: 'string', default: 'export' },
     'min-confidence': { type: 'string', default: 'medium' },
     codebook: { type: 'string' },
+    deep: { type: 'boolean', default: false },
   },
 });
 
@@ -51,7 +53,11 @@ if (!existsSync(`${dir}/pull_requests.jsonl`) || !existsSync(`${dir}/existing_la
 const prs = readFileSync(`${dir}/pull_requests.jsonl`, 'utf8')
   .split('\n').filter(Boolean).map((l) => JSON.parse(l))
   .filter((p) => p.state === 'merged' && p.base_ref === 'dev')
-  .map((p) => ({ number: p.number, title: p.title ?? '', body: p.body ?? '', html_url: '' }));
+  .map((p) => ({
+    number: p.number, title: p.title ?? '', body: p.body ?? '', html_url: '',
+    files: (p.files ?? []).map((f) => f.path).filter(Boolean),
+    created_at: p.created_at, merged_at: p.merged_at,
+  }));
 
 const truth = new Map();
 for (const line of readFileSync(`${dir}/existing_labels.csv`, 'utf8').split('\n').slice(1)) {
@@ -61,7 +67,10 @@ for (const line of readFileSync(`${dir}/existing_labels.csv`, 'utf8').split('\n'
 }
 
 const codebook = loadCodebook(values.codebook);
-const result = audit(prs, codebook, { minConfidence: values['min-confidence'] });
+// Supersede chains need the state of referenced pull requests, and the export
+// holds only merged ones, so only the migration signal can be scored here.
+const structural = values.deep ? migrationOverlaps(prs) : new Map();
+const result = audit(prs, codebook, { minConfidence: values['min-confidence'], structural });
 const predicted = new Map(result.flagged.map((f) => [f.number, new Set(f.hits.map((h) => ALIAS[h.id] ?? h.id))]));
 
 console.log(`codebook ${codebook.version} · ${prs.length} pull requests · `
@@ -95,6 +104,16 @@ const found = [...truth.keys()].filter((n) => predicted.has(n));
 const missed = [...truth.keys()].filter((n) => !predicted.has(n));
 const TARGET = 80;
 
+if (values.deep) {
+  const structuralOnly = result.flagged.filter((f) => f.hits.every((h) => h.kind === 'structural'));
+  console.log(`\nstructural signal: ${structural.size} pull requests, `
+    + `${structuralOnly.length} of them silent in their own text`);
+  if (structuralOnly.length) {
+    console.log(`  ${structuralOnly.map((f) => '#' + f.number).join(', ')}`);
+    const unlabelled = structuralOnly.filter((f) => !truth.has(f.number));
+    console.log(`  unlabelled by the original method: ${unlabelled.map((f) => '#' + f.number).join(', ') || 'none'}`);
+  }
+}
 console.log(`\nlabelled pull requests found again : ${found.length} of ${truth.size}`);
 console.log(`flagged only by this codebook      : ${[...predicted.keys()].filter((n) => !truth.has(n)).length}`);
 if (missed.length) console.log(`missed                             : ${missed.slice(0, 12).join(', ')}`);
