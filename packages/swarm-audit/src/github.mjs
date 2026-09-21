@@ -4,6 +4,36 @@ export function parseRepo(input) {
   return { owner: m[1], repo: m[2] };
 }
 
+/**
+ * A 403 from GitHub is either "you are rate limited" or "you may not do that",
+ * and the difference is the only thing the caller can act on. Read once, here,
+ * so every request path reports it the same way.
+ */
+function rateLimitError(res) {
+  const remaining = res.headers.get('x-ratelimit-remaining');
+  if (res.status !== 429 && !(res.status === 403 && remaining === '0')) return null;
+  const reset = res.headers.get('x-ratelimit-reset');
+  const when = reset ? new Date(Number(reset) * 1000).toISOString() : 'later';
+  return new Error(
+    `GitHub rate limit hit. Set GITHUB_TOKEN or retry after ${when}. `
+    + 'Unauthenticated requests are capped at 60 per hour, and --deep costs one per pull request.',
+  );
+}
+
+/** Requests left in this hour, or null when GitHub does not say. */
+export async function rateLimitRemaining({ token, fetchImpl = fetch }) {
+  const headers = { Accept: 'application/vnd.github+json', 'User-Agent': 'swarm-audit' };
+  if (token) headers.Authorization = `Bearer ${token}`;
+  try {
+    const res = await fetchImpl('https://api.github.com/rate_limit', { headers });
+    if (!res.ok) return null;
+    const body = await res.json();
+    return body?.resources?.core?.remaining ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export async function fetchPrs({ owner, repo, token, limit = 500, fetchImpl = fetch }) {
   const prs = [];
   let page = 1;
@@ -12,12 +42,8 @@ export async function fetchPrs({ owner, repo, token, limit = 500, fetchImpl = fe
     const headers = { Accept: 'application/vnd.github+json', 'User-Agent': 'swarm-audit' };
     if (token) headers.Authorization = `Bearer ${token}`;
     const res = await fetchImpl(url, { headers });
-    const limited = res.status === 429 || (res.status === 403 && res.headers.get('x-ratelimit-remaining') === '0');
-    if (limited) {
-      const reset = res.headers.get('x-ratelimit-reset');
-      const when = reset ? new Date(Number(reset) * 1000).toISOString() : 'later';
-      throw new Error(`GitHub rate limit hit. Set GITHUB_TOKEN or retry after ${when}.`);
-    }
+    const limited = rateLimitError(res);
+    if (limited) throw limited;
     if (res.status === 403) throw new Error('GitHub refused the request (403). Check GITHUB_TOKEN scope or your network proxy.');
     if (res.status === 404) throw new Error(`Repository ${owner}/${repo} not found (private repos need GITHUB_TOKEN).`);
     if (!res.ok) throw new Error(`GitHub API error ${res.status}`);
@@ -36,6 +62,8 @@ async function api(path, { token, fetchImpl = fetch }) {
   const headers = { Accept: 'application/vnd.github+json', 'User-Agent': 'swarm-audit' };
   if (token) headers.Authorization = `Bearer ${token}`;
   const res = await fetchImpl(`https://api.github.com${path}`, { headers });
+  const limited = rateLimitError(res);
+  if (limited) throw limited;
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`GitHub API error ${res.status} on ${path}`);
   return res.json();

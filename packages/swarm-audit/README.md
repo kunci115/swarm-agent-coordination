@@ -63,7 +63,17 @@ original keyword pass. One of those two is independently known to be a real
 chain fork from the git history. That is the whole argument for `--deep`: the
 failures that matter most are the ones nobody wrote down.
 
-It costs one API request per pull request, which is why it is not the default.
+It costs about one API request per pull request, which is why it is not the
+default. Unauthenticated requests are capped at 60 per hour, so `--deep` on a
+repository with more pull requests than that needs a token:
+
+```sh
+GITHUB_TOKEN=... npx swarm-audit owner/repo --deep
+```
+
+The run checks the remaining budget before spending it and refuses up front
+rather than failing halfway, because a half-finished run leaves you with nothing
+and an hour to wait.
 
 ## What it reports on an ordinary repository
 
