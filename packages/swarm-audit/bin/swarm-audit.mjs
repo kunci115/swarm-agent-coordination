@@ -3,7 +3,8 @@ import { parseArgs } from 'node:util';
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { loadCodebook, audit } from '../src/classify.mjs';
-import { parseRepo, fetchPrs } from '../src/github.mjs';
+import { parseRepo, fetchPrs, fetchFiles, fetchRefStates, referencedNumbers } from '../src/github.mjs';
+import { migrationOverlaps, supersedeChains, mergeSignals } from '../src/deep.mjs';
 import { renderHtml } from '../src/report.mjs';
 import { renderBadge } from '../src/badge.mjs';
 
@@ -15,6 +16,11 @@ Options:
   --limit <n>              Max PRs to fetch (default: 500)
   --min-confidence <lvl>   low | medium | high (default: medium)
   --codebook <path>        Custom codebook JSON
+  --deep                   Also compute structural signals: migration files open
+                           in two pull requests at once, and references to work
+                           closed without merging. Costs one extra API request
+                           per pull request, and finds failures nobody wrote
+                           about — which is most of them.
   --json                   Print JSON result to stdout
   -h, --help               Show help
 
@@ -28,6 +34,7 @@ const { values, positionals } = parseArgs({
     limit: { type: 'string', default: '500' },
     'min-confidence': { type: 'string', default: 'medium' },
     codebook: { type: 'string' },
+    deep: { type: 'boolean', default: false },
     json: { type: 'boolean', default: false },
     help: { type: 'boolean', short: 'h', default: false },
   },
@@ -50,7 +57,25 @@ async function main() {
     label = `${owner}/${repo}`;
     prs = await fetchPrs({ owner, repo, token: process.env.GITHUB_TOKEN, limit: Number(values.limit) });
   }
-  const result = audit(prs, codebook, { minConfidence: values['min-confidence'] });
+  let structural = new Map();
+  if (values.deep) {
+    if (values['from-file']) {
+      structural = migrationOverlaps(prs);
+    } else {
+      const { owner, repo } = parseRepo(positionals[0]);
+      process.stderr.write(`deep: fetching files for ${prs.length} pull requests...\n`);
+      await fetchFiles({ owner, repo, prs, token: process.env.GITHUB_TOKEN });
+      const refs = new Set();
+      for (const pr of prs) {
+        pr.referenced_prs = referencedNumbers(pr);
+        for (const n of pr.referenced_prs) refs.add(n);
+      }
+      process.stderr.write(`deep: resolving ${refs.size} referenced numbers...\n`);
+      const states = await fetchRefStates({ owner, repo, numbers: [...refs], token: process.env.GITHUB_TOKEN });
+      structural = mergeSignals(migrationOverlaps(prs), supersedeChains(prs, states));
+    }
+  }
+  const result = audit(prs, codebook, { minConfidence: values['min-confidence'], structural });
   mkdirSync(values.out, { recursive: true });
   writeFileSync(join(values.out, 'report.json'), JSON.stringify(result, null, 2));
   writeFileSync(join(values.out, 'report.html'), renderHtml(result, label));
@@ -60,6 +85,7 @@ async function main() {
     return;
   }
   console.log(`${label}: ${result.incidentPrs}/${result.totalPrs} PRs (${Math.round(result.incidentRate * 100)}%) show coordination incidents`);
+  if (result.structuralOnlyPrs) console.log(`  ${result.structuralOnlyPrs} found by measurement alone — nothing in their text says so`);
   for (const c of result.categories) if (c.count) console.log(`  ${c.label.padEnd(28)} ${String(c.count).padStart(4)}  → ${c.gate}`);
   console.log(`\nReport: ${join(values.out, 'report.html')}\nBadge:  ${join(values.out, 'badge.svg')}`);
 }

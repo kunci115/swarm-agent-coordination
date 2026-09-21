@@ -35,6 +35,36 @@ word (`database`, `queue`) in an otherwise unrelated pull request. Chasing 85 of
 database vocabulary is generic (`alembic`, `migration`) and those terms sit in
 `weak`, which counts only in a title at `medium`. `--min-confidence low` finds it.
 
+## `--deep`: what the text never says
+
+```sh
+npx swarm-audit owner/repo --deep
+```
+
+Two signals computed from what pull requests *did*:
+
+- **Migration files open in two pull requests at once.** Two lanes writing a
+  migration against the same parent is the mechanism behind the largest
+  incident category in the case study. Each lane is internally consistent, each
+  lane's tests pass, and git reports no conflict because the two lanes wrote
+  different files.
+- **A reference to work closed without merging.** That is a supersede chain
+  whether or not anyone used the word. A number in a body is just an integer —
+  in the corpus three quarters of them point at issues — so each one is looked
+  up rather than assumed.
+
+Structural hits are never filtered by `--min-confidence`. The confidence ladder
+describes how sure we are about a *word*; a measurement is not a reading of a
+word.
+
+Scored on the corpus, the migration signal flags 8 pull requests and **2 of them
+say nothing about it in their own text** — neither carries a label from the
+original keyword pass. One of those two is independently known to be a real
+chain fork from the git history. That is the whole argument for `--deep`: the
+failures that matter most are the ones nobody wrote down.
+
+It costs one API request per pull request, which is why it is not the default.
+
 ## What this cannot see
 
 The audit reads pull request prose, so it measures **how often a failure was
@@ -49,8 +79,10 @@ corpus is specific about both:
   before review, so no pull request ever mentions them. In the corpus the chain
   forked 11 times and **none** of the eleven was a pull request merge commit.
 
-Both need the gates in `scripts/` — a pre-push hook, not a report — to be seen
-properly. The audit is the thing that tells you to install them.
+`--deep` closes part of the first gap and none of the second: a fork that was
+repaired before either pull request opened leaves no overlap to find. Both still
+need the gates in `scripts/` — a pre-push hook, not a report. The audit is the
+thing that tells you to install them.
 
 Hits carry a confidence level; the default floor is `medium`. Treat results as
 leads, not verdicts.

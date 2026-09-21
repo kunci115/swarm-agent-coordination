@@ -32,7 +32,7 @@ A prototype of this phase is already written (see "Status" at the bottom). Remai
 |----|------|---------------------|
 | ~~A1~~ | ~~Replace `src/codebook.default.json` with rules derived from `analysis/`~~ **done** | Scored by `tools/corpus-check.mjs`: finds 80 of the 85 labelled pull requests at the default confidence floor, the bar `analysis/classify.py` set. Acceptance was restated: reproducing the *published counts* would mean reproducing one particular keyword list, and the corpus shows that list contains false positives. |
 | ~~A2~~ | ~~Live GitHub fetch hardening~~ **done** | Already satisfied by the prototype and covered by tests: paginates and stops on a short page, distinguishes a rate limit from a plain 403 and reports the reset time, names `GITHUB_TOKEN` on 404, returns empty for a repo with no pull requests. |
-| A3 | Structural signals beyond keywords | Detect supersede chains from closed-unmerged PRs referenced by later PRs; detect migration files touched by 2+ open PRs (needs `/pulls/{n}/files`, behind `--deep` flag) |
+| ~~A3~~ | ~~Structural signals beyond keywords~~ **done** | `--deep` computes both. Scored on the corpus the migration signal flags 8 pull requests, 2 of which say nothing about it in their own text and carry no label from the original pass; one of those is independently known to be a real chain fork. Supersede chains resolve each referenced number against the API rather than assuming it is a pull request — in the corpus three quarters point at issues. Structural hits bypass the confidence floor, because a measurement is not a reading of a word. |
 | ~~A4~~ | ~~Recommended gate per category in the report~~ **done** | Each flagged row links every script and workflow it names, and carries a copy-paste install line. A category with no hits shows neither. The report also states what prose cannot show, with the two numbers that make the point. |
 | A5 | Publish | `npx swarm-audit owner/repo` works from npm; version 0.1.0 tagged |
 
@@ -122,7 +122,7 @@ Audits run, badges installed, anonymized datasets contributed. Stars follow.
 ## Status
 
 - Phase 1 prototype written and tested offline: CLI, keyword classifier, JSON + HTML report, SVG badge, `--from-file` offline mode.
-- **A1, A2 and A4 done.** A3 (`--deep` structural signals) and A5 (publish) remain in Phase 1.
+- **A1, A2, A3 and A4 done.** Only A5 (publish to npm) remains in Phase 1.
 - The codebook is derived from `analysis/` and scored against the corpus (`make audit`): 80 of 85 labelled pull requests found, 11 unit tests green offline. Package moved to the roadmap's owned path `packages/swarm-audit/`.
 - Two roadmap assumptions were corrected by the scoring, and later tasks should carry the correction: the reference set contains probable false positives, so "reproduce the published counts" is the wrong acceptance criterion; and `runner_queue` cannot be measured from pull request text at all, which is an argument for A3 (`--deep`) rather than for more keywords.
 - Note for every lane on this roadmap: rule 2 says `Owned paths:`, but the gate in `lane-gate.yml` requires a `## Paths owned` heading and refuses anything else. Use the heading.
