@@ -4,9 +4,23 @@ Audit a repository's pull request history for multi-agent coordination incidents
 
 ```sh
 npx swarm-audit owner/repo            # public repo
-GITHUB_TOKEN=... npx swarm-audit owner/private-repo
 npx swarm-audit --from-file prs.json  # offline, local PR export
+
+# private repos, and anything with --deep
+GITHUB_TOKEN=$(gh auth token) npx swarm-audit owner/repo --deep
 ```
+
+## What it costs in API requests
+
+| mode | requests | unauthenticated (60/hour) |
+|---|---|---|
+| default | one per 100 pull requests | fine for almost any repository |
+| `--deep` | about one per pull request | runs out above ~60 PRs |
+
+A token raises the hourly limit from 60 to 5,000, which makes `--deep` practical
+on anything short of a very large repository. Any GitHub token works; for public
+repositories it needs no scopes at all. If you have the `gh` CLI you already
+have one: `GITHUB_TOKEN=$(gh auth token)`.
 
 Outputs `report.html`, `report.json`, and `badge.svg` in `./swarm-audit-report/`.
 

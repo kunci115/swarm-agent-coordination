@@ -71,7 +71,7 @@ async function main() {
         console.error(`swarm-audit: --deep needs about ${prs.length + 1} API requests and ${remaining} remain this hour.`);
         console.error(process.env.GITHUB_TOKEN
           ? '  Wait for the limit to reset, or narrow the run with --limit.'
-          : '  Set GITHUB_TOKEN to raise the limit from 60/hour to 5000, or narrow the run with --limit.');
+          : '  GITHUB_TOKEN=$(gh auth token) raises the limit from 60/hour to 5,000. Or narrow the run with --limit.');
         process.exit(1);
       }
       process.stderr.write(`deep: fetching files for ${prs.length} pull requests...\n`);

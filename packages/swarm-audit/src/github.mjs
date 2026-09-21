@@ -15,8 +15,10 @@ function rateLimitError(res) {
   const reset = res.headers.get('x-ratelimit-reset');
   const when = reset ? new Date(Number(reset) * 1000).toISOString() : 'later';
   return new Error(
-    `GitHub rate limit hit. Set GITHUB_TOKEN or retry after ${when}. `
-    + 'Unauthenticated requests are capped at 60 per hour, and --deep costs one per pull request.',
+    `GitHub rate limit hit. Retry after ${when}, or raise the limit:\n`
+    + '  GITHUB_TOKEN=$(gh auth token) swarm-audit ...   # if you have the gh CLI\n'
+    + '  or a personal access token from github.com/settings/tokens (no scopes needed for public repos)\n'
+    + 'Unauthenticated requests are capped at 60 per hour; a token raises it to 5,000.',
   );
 }
 
