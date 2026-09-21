@@ -97,20 +97,26 @@ covers() { # path, then patterns on stdin
 declared_paths() {
     sed -n '/^#\{1,6\}[[:space:]]*[Pp]aths owned/,/^#\{1,6\}[[:space:]]/p' > "$TMP/section"
 
-    # Backticks are an explicit "this is a path" marker, so a backticked token
-    # may be a bare filename: `Makefile`, `.gitignore`. A bullet is not such a
-    # marker, so a bullet item has to look like a path — otherwise a sentence
-    # fragment becomes a pattern.
-    grep -o '`[^`]*`' < "$TMP/section" | tr -d '`' |
+    # A token is a candidate path if it holds no whitespace, opens with neither
+    # a markdown heading nor a table pipe, and contains at least one letter or
+    # digit. That last clause is the whole defence: the token that has to be
+    # rejected is `**` from bold text, which would otherwise be a pattern
+    # matching every file and would pass the entire check in silence. It is
+    # made only of asterisks, so requiring one alphanumeric excludes it while
+    # leaving `Makefile`, `.gitignore` and `*.py` alone.
+    #
+    # Prose that slips through — a bare word like `Six` — becomes a pattern
+    # that matches no file, so it changes nothing. Being too narrow here costs
+    # a refused correct declaration; being too broad costs only noise.
+    {
+        grep -o '`[^`]*`' < "$TMP/section" | tr -d '`'
+        sed -n 's/^[[:space:]]*[-*][[:space:]][[:space:]]*//p' < "$TMP/section" |
+            sed 's/[[:space:]].*$//'
+    } |
         sed 's/[,;:]$//; s|^\./||' |
-        grep -E '^[A-Za-z0-9_.{-][A-Za-z0-9_./*{},-]*$' > "$TMP/tokens" || true
-
-    sed -n 's/^[[:space:]]*[-*][[:space:]][[:space:]]*//p' < "$TMP/section" |
-        sed 's/[[:space:]].*$//; s/[,;:]$//; s|^\./||' |
-        grep -E '^[^*#|[:space:]][^[:space:]]*$' |
-        grep -E '[/.]' >> "$TMP/tokens" || true
-
-    sort -u "$TMP/tokens"
+        grep -E '^[^#|[:space:]]+$' |
+        grep -E '[A-Za-z0-9]' |
+        sort -u || true
 }
 
 # Compare a declaration against a list of touched paths. Both are files.

@@ -106,6 +106,10 @@ printf '## Paths owned\n\n| Path | What |\n| --- | --- |\n| `app/a/one.py` | x |
 check_in "$TMP/owned" "markdown table declaration"       0 sh "$CPO" --file "$TMP/b.md" HEAD~1
 printf '## Paths owned\n\n**Six** files, described below.\n' > "$TMP/b.md"
 check_in "$TMP/owned" "bold text is not a wildcard"      1 sh "$CPO" --file "$TMP/b.md" HEAD~1
+# A bare root filename is a normal thing to declare, with or without backticks.
+( cd "$TMP/owned" && echo z > Makefile && git add -A && git commit -qm "add Makefile" )
+owned app/a.py 'tests/*' 'docs/ui/' Makefile
+check_in "$TMP/owned" "bare filename bullet accepted"    0 sh "$CPO" --file "$TMP/b.md" HEAD~1
 printf '## Paths owned\n' > "$TMP/b.md"
 check_in "$TMP/owned" "empty section refused"            1 sh "$CPO" --file "$TMP/b.md" HEAD~1
 cd "$TMP/repo"
@@ -322,6 +326,24 @@ if [ "$(git rev-parse dev)" = "$(git rev-parse HEAD)" ] && [ ! -f app/a_feature.
 else
     FAIL=$((FAIL+1)); echo "FAIL: integration branch left untouched"
 fi
+
+# ---------------------------------------------------------------------------
+echo ""
+echo "== experiments/migration-collision =="
+# The instrument has to discriminate, not just fire. Both conditions leave every
+# lane green; only the merge grading differs, and only because of when the
+# second lane cut its migration.
+seam_for() { # condition
+    sh "$KIT_ROOT/experiments/migration-collision/run.sh" --condition "$1" "$TMP/exp-$1" 2>/dev/null |
+        sed -n 's/.*"seam_defect":\([01]\).*/\1/p'
+}
+cd "$TMP"
+got=$(seam_for stale-green)
+if [ "$got" = 1 ]; then PASS=$((PASS+1)); echo "PASS: stale-green produces a seam defect"
+else FAIL=$((FAIL+1)); echo "FAIL: stale-green produces a seam defect (got '$got')"; fi
+got=$(seam_for re-gated)
+if [ "$got" = 0 ]; then PASS=$((PASS+1)); echo "PASS: re-gated does not (negative control)"
+else FAIL=$((FAIL+1)); echo "FAIL: re-gated does not (negative control) (got '$got')"; fi
 
 echo ""
 echo "===== $PASS passed, $FAIL failed ====="

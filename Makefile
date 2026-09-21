@@ -1,7 +1,7 @@
 # Swarm Agent Coordination — kit checks and corpus analysis.
 #
 #   make check      everything: kit self-test + corpus analysis
-#   make verify     the kit's own scripts, against throwaway repos (38 checks)
+#   make verify     the kit's own scripts and experiments, against throwaway repos (49 checks)
 #   make reproduce  recompute the published numbers from the corpus
 #   make classify   re-derive incidents -> data/incidents.json
 #
