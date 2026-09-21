@@ -1,0 +1,11 @@
+{
+  "name": "swarm-audit",
+  "version": "0.0.1",
+  "description": "Audit a repository's pull request history for multi-agent coordination incidents.",
+  "type": "module",
+  "bin": { "swarm-audit": "bin/swarm-audit.mjs" },
+  "engines": { "node": ">=20" },
+  "scripts": { "test": "node --test test/*.test.mjs" },
+  "license": "MIT",
+  "files": ["bin", "src"]
+}

@@ -1,0 +1,12 @@
+[
+  {"number": 67, "title": "Add booking slots API", "body": "Initial version", "html_url": "https://example.test/pull/67"},
+  {"number": 71, "title": "Rework booking slots API", "body": "Supersedes #67. Different slot model.", "html_url": "https://example.test/pull/71"},
+  {"number": 72, "title": "Fix multiple alembic heads", "body": "Merge migration after two lanes cut from the same parent", "html_url": "https://example.test/pull/72"},
+  {"number": 73, "title": "Raise connection pool size", "body": "Pool demand exceeded ceiling", "html_url": "https://example.test/pull/73"},
+  {"number": 74, "title": "Integration fix for payments and orders", "body": "Both lanes green, combined tree failed", "html_url": "https://example.test/pull/74"},
+  {"number": 75, "title": "Back-merge dev into lane-7", "body": "Lane landed behind integration branch", "html_url": "https://example.test/pull/75"},
+  {"number": 76, "title": "Docs typo", "body": "", "html_url": "https://example.test/pull/76"},
+  {"number": 77, "title": "Update README", "body": "No conflict with other lanes expected", "html_url": "https://example.test/pull/77"},
+  {"number": 78, "title": "Add tests for auth", "body": null, "html_url": "https://example.test/pull/78"},
+  {"number": 79, "title": "Resolve merge conflicts in settings.py", "body": "", "html_url": "https://example.test/pull/79"}
+]
