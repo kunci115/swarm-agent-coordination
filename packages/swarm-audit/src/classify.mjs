@@ -57,7 +57,7 @@ export function audit(prs, codebook, { minConfidence = 'medium' } = {}) {
     totalPrs: total,
     incidentPrs: flagged.length,
     incidentRate: total === 0 ? 0 : flagged.length / total,
-    categories: codebook.categories.map((c) => ({ id: c.id, label: c.label, gate: c.gate, count: byCategory[c.id] })),
+    categories: codebook.categories.map((c) => ({ id: c.id, label: c.label, gate: c.gate, install: c.install, count: byCategory[c.id] })),
     flagged,
   };
 }
