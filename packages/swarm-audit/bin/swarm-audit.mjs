@@ -3,7 +3,7 @@ import { parseArgs } from 'node:util';
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { loadCodebook, audit } from '../src/classify.mjs';
-import { parseRepo, fetchPrs, fetchFiles, fetchRefStates, referencedNumbers } from '../src/github.mjs';
+import { parseRepo, fetchPrs, fetchFiles, fetchRefStates, referencedNumbers, rateLimitRemaining } from '../src/github.mjs';
 import { migrationOverlaps, supersedeChains, mergeSignals } from '../src/deep.mjs';
 import { renderHtml } from '../src/report.mjs';
 import { renderBadge } from '../src/badge.mjs';
@@ -63,6 +63,17 @@ async function main() {
       structural = migrationOverlaps(prs);
     } else {
       const { owner, repo } = parseRepo(positionals[0]);
+      // --deep costs about one request per pull request. Check the budget
+      // before spending it: failing halfway leaves the caller with nothing and
+      // an hour to wait, which is a worse outcome than refusing up front.
+      const remaining = await rateLimitRemaining({ token: process.env.GITHUB_TOKEN });
+      if (remaining !== null && remaining < prs.length + 1) {
+        console.error(`swarm-audit: --deep needs about ${prs.length + 1} API requests and ${remaining} remain this hour.`);
+        console.error(process.env.GITHUB_TOKEN
+          ? '  Wait for the limit to reset, or narrow the run with --limit.'
+          : '  Set GITHUB_TOKEN to raise the limit from 60/hour to 5000, or narrow the run with --limit.');
+        process.exit(1);
+      }
       process.stderr.write(`deep: fetching files for ${prs.length} pull requests...\n`);
       await fetchFiles({ owner, repo, prs, token: process.env.GITHUB_TOKEN });
       const refs = new Set();

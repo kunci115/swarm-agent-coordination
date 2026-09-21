@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { migrationOverlaps, supersedeChains, mergeSignals } from '../src/deep.mjs';
 import { loadCodebook, audit } from '../src/classify.mjs';
-import { referencedNumbers } from '../src/github.mjs';
+import { referencedNumbers, fetchFiles, rateLimitRemaining } from '../src/github.mjs';
 
 const pr = (number, files, opened, closed, body = '') => ({
   number, files, body,
@@ -75,4 +75,35 @@ test('mergeSignals keeps hits from every source', () => {
   const merged = mergeSignals(a, b);
   assert.equal(merged.get(1).length, 2);
   assert.equal(merged.get(2).length, 1);
+});
+
+test('a rate limit during --deep is reported as one, not as a bare 403', async () => {
+  // The bug this pins: the deep paths had their own request helper, which knew
+  // nothing about rate limits, so a run on a repository with more pull requests
+  // than the unauthenticated budget died with "GitHub API error 403" partway
+  // through. Found by running against someone else's repository.
+  const fake = async () => ({
+    ok: false, status: 403,
+    headers: new Map([['x-ratelimit-remaining', '0'], ['x-ratelimit-reset', '0']]),
+    json: async () => ({}),
+  });
+  await assert.rejects(
+    fetchFiles({ owner: 'a', repo: 'b', prs: [{ number: 1 }], fetchImpl: fake }),
+    /rate limit/,
+  );
+});
+
+test('a plain 403 during --deep is still a plain 403', async () => {
+  const fake = async () => ({ ok: false, status: 403, headers: new Map(), json: async () => ({}) });
+  await assert.rejects(
+    fetchFiles({ owner: 'a', repo: 'b', prs: [{ number: 1 }], fetchImpl: fake }),
+    /GitHub API error 403/,
+  );
+});
+
+test('rateLimitRemaining reads the budget, and survives not being told', async () => {
+  const ok = async () => ({ ok: true, json: async () => ({ resources: { core: { remaining: 42 } } }) });
+  assert.equal(await rateLimitRemaining({ fetchImpl: ok }), 42);
+  const broken = async () => { throw new Error('offline'); };
+  assert.equal(await rateLimitRemaining({ fetchImpl: broken }), null);
 });
